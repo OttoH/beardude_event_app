@@ -2,22 +2,22 @@
 @font-face {
   font-family: "San Francisco";
   font-weight: 100;
-  src: url("../statics/assets/fonts/sanfranciscodisplay-thin-webfont.woff");
+  src: url("../statics/assets/fonts/sanfranciscodisplay-thin-webfont.woff") format('woff');
 }
 @font-face {
   font-family: "San Francisco";
   font-weight: 300;
-  src: url("../statics/assets/fonts/sanfranciscodisplay-regular-webfont.woff");
+  src: url("../statics/assets/fonts/sanfranciscodisplay-regular-webfont.woff") format('woff');
 }
 /** Medium */
 @font-face {
   font-family: "San Francisco";
   font-weight: 500;
-  src: url("../statics/assets/fonts/sanfranciscodisplay-medium-webfont.woff");
+  src: url("../statics/assets/fonts/sanfranciscodisplay-medium-webfont.woff") format('woff');
 }
 /** Bold */
 @font-face {
   font-family: "San Francisco";
   font-weight: 700;
-  src: url("../statics/assets/fonts/sanfranciscodisplay-bold-webfont.woff");
+  src: url("../statics/assets/fonts/sanfranciscodisplay-bold-webfont.woff") format('woff');
 }

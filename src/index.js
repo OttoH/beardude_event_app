@@ -30,12 +30,12 @@ ReactDOM.render(
           <Route exact path='/' component={PublicEventList} />
           <Route exact path='/event/:id' component={PublicEvent} />
           <Route exact path='/console' component={EventList} />
-          <Route path='/console/login' component={Account} />
           <Route path='/console/event/:id' component={EventManager} />
           <Route path='/console/eventMatch/:id' component={MatchManager} />
           <Route path='/console/racer' component={Racer} />
           <Route path='/console/team' component={Team} />
           <Route path='/console/manager' component={Manager} />
+          <Route path='/login' component={Account} />
           <Route component={NotFound} />
         </Switch>
       </div>

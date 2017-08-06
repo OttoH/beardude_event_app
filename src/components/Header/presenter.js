@@ -47,17 +47,17 @@ class Header extends BaseComponent {
   render () {
     const { account, location, match, isPublic } = this.props
     if (!isPublic && account.isAuthenticated !== undefined && !account.isAuthenticated) {
-      return <Redirect to={{ pathname: '/console/login', state: { from: location } }} />
+      return <Redirect to={{ pathname: '/login', state: { from: location } }} />
     }
     return (<div className={css.mainHeader}>
-        <div className={css.heading}>
-            <h1 className={css.bdlogo}>
-              <Link to={(isPublic) ? '/' : '/console'}>
-                <span className={css.logoB}>Beardude</span>
-                <span className={css.logoE}>Event</span>
-              </Link>
-            </h1>
-        </div>
+      <div className={css.heading}>
+        <h1 className={css.bdlogo}>
+          <Link to={(isPublic) ? '/' : '/console'}>
+            <span className={css.logoB}>Beardude</span>
+            <span className={css.logoE}>Event</span>
+          </Link>
+        </h1>
+      </div>
       { this.props.account && this.props.account.manager && renderAccountInfo(this) }
       { this.props.nav && renderNav(returnNavs[this.props.nav](match)) }
     </div>)
