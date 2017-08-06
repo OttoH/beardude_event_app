@@ -1,6 +1,6 @@
 # beardude_event
 
-Beardude Event 用來管理單車比賽的賽制及流程，提供賽事管理介面以及選手報名與成績管理的功能。
+Beardude Event Web App : 用來管理單車比賽的賽制及流程，提供賽事管理介面以及選手報名與成績管理的 REACT WEB APP。
 
 Model:
 ![beardude event model1](https://cloud.githubusercontent.com/assets/6611716/26103132/a9dfc154-3a6a-11e7-86ac-3175496962db.jpg)
@@ -30,6 +30,20 @@ PRODUCTION (unstable):
 one screen (API)
 > npm run build
 > npm run server
+
+the other (frontend)
+> npm run dev (enter rs if reload fail or seems strange)
+
+GO TO http://localhost:3030/
+
+===
+
+PRODUCTION DEBUG MODE
+
+one screen (API)
+> npm run build
+> DEBUG=express-http-proxy npm run server --> both proxy and connect-history-api-fallback
+> DEBUG=true npm run server --> just connect-history-api-fallback
 
 the other (frontend)
 > npm run dev (enter rs if reload fail or seems strange)

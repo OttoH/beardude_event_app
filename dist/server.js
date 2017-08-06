@@ -21,16 +21,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var app = (0, _express2.default)();
 var port = process.env.SERVER_PORT || '3030';
 
-app.use(_express2.default.static(_path2.default.resolve(__dirname, '../dist/')));
-app.use((0, _connectHistoryApiFallback2.default)());
-app.use(_express2.default.static(_path2.default.resolve(__dirname, '../dist/')));
-
 app.get('/api/**/**', (0, _expressHttpProxy2.default)('http://localhost:1337'));
 
-app.get('/', function (req, res) {
-  console.log(req);
-  res.render(_path2.default.join(__dirname, '../dist/index.html'));
-});
+app.use((0, _connectHistoryApiFallback2.default)({
+  verbose: !!process.env.DEBUG
+}));
+
+app.use(_express2.default.static(_path2.default.resolve(__dirname, '../dist/')));
 
 app.listen(port, '0.0.0.0', function (err) {
   if (err) {
