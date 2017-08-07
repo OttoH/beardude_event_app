@@ -20,6 +20,9 @@ module.exports = {
     new webpack.EnvironmentPlugin({
       NODE_ENV: 'development'
     }),
+    new webpack.DefinePlugin({
+      'SERVICE_URL': JSON.stringify('http://localhost:1337')
+    }),
     new webpack.HotModuleReplacementPlugin(),
     new HtmlWebpackPlugin({
       template: './src/statics/views/sharePage.ejs', // input
