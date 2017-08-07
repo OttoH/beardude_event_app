@@ -40,7 +40,7 @@ const render = {
       }
       case 'started': {
         return <span className={css.raceCtrl}>
-          {(race.result.laps === race.laps)
+          {(processData.canStopRace(race.result, race.laps))
             ? <Button style='short' text='結束比賽' onClick={handleEndRace} />
             : <Button style='shortRed' text='結束比賽' onClick={handleUpdateDialog('endRace')} />
           }
@@ -257,7 +257,7 @@ export class MatchManager extends BaseComponent {
   }
   socketIoEvents (callback) {
     this.socketio.on('connect', function onConnect () {
-      this.socketio.get('/api/race/joinReaderRoom', function res () { if (callback !== undefined) { callback() } })
+      this.socketio.emit('/api/race/joinReaderRoom', function res () { if (callback !== undefined) { callback() } })
     }.bind(this))
     this.socketio.on('readerstatus', function (data) {
       this.setState({readerStatus: (data.result && data.result.isSingulating) ? 'started' : 'idle'})
@@ -272,7 +272,7 @@ export class MatchManager extends BaseComponent {
     }.bind(this))
   }
   getReaderStatus () {
-    this.socketio.post(io.sails.url + '/api/race/readerRoom', { type: 'getreaderstatus' })
+    this.socketio.emit(io.sails.url + '/api/race/readerRoom?isSocket=1', { type: 'getreaderstatus' })
   }
   handleToggleEdit (field) {
     return (e) => {
@@ -337,7 +337,7 @@ export class MatchManager extends BaseComponent {
     }
   }
   handleControlReader (type) {
-    this.socketio.post(io.sails.url + '/api/race/readerRoom', { type: type, payload: { eventId: this.props.event.id } })
+    this.socketio.emit('/api/race/readerRoom?isSocket=1', { type: type, payload: { eventId: this.props.event.id } })
   }
   handleStartRace () {
     const obj = { id: this.state.races[this.state.raceSelected].id, startTime: Date.now() + (this.state.countdown * 1000) }
@@ -374,7 +374,9 @@ export class MatchManager extends BaseComponent {
     this.dispatch(eventActions.controlRace('end', {id: this.state.races[this.state.raceSelected].id}, onSuccess))
   }
   handleSubmitResult () {
-    this.dispatch(eventActions.submitRaceResult(this.state.races[this.state.raceSelected], this.updateRaces))
+    let race = this.state.races[this.state.raceSelected]
+    race.result = processData.returnTrimmedResult(race.result, race.laps)
+    this.dispatch(eventActions.submitRaceResult(race, this.updateRaces))
   }
   handleSelect (index) {
     return (e) => {

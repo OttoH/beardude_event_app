@@ -59,7 +59,7 @@ const processData = {
           output.push(processData.returnFormattedTime(result[i] - lastRecord))
           lastRecord = result[i]
           lapsLeft -= 1
-        } else if (raceStatus === 'started') {
+        } else if (lapsLeft > 0 && raceStatus === 'started') {
           output.push('🕒')
           lapsLeft -= 1
         }
@@ -80,7 +80,7 @@ const processData = {
     let sortTable = []
     let incomplete = []
     let notStarted = []
-    const lastRecordIndex = race.laps + 1
+    const lastRecordIndex = race.laps
 
     race.registrations.map(reg => {
       const record = race.recordsHashTable[reg.epc]
@@ -101,6 +101,27 @@ const processData = {
     sortTable = sortTable.concat(incomplete).concat(notStarted)
     // sortTable: [epc, name, raceNumber, timestamp, laps, record]
     return sortTable.map((item, index) => ({ epc: item[0], registration: item[1], sum: (item[3]) ? processData.returnFormattedTime(item[3] - race.startTime) : '-', laps: item[4], lapRecords: processData.returnLapRecord(item[5], race.laps, race.startTime, race.raceStatus), advanceTo: processData.returnAdvanceToId(index, race.advancingRules) }))
+  },
+  canStopRace: (result, laps) => {
+    let canStop = true
+    result.map(V => {
+      if (V.laps < laps) { canStop = false }
+    })
+    return canStop
+  },
+  returnTrimmedResult: (result, laps) => {
+    let output = []
+    const lastRecordIndex = laps - 1
+    result.map(V => {
+      let final = V
+      if (V.lapRecords.length > (lastRecordIndex + 1)) {
+        console.log('found exception, V.lapRecords: ', V.lapRecords)
+        console.log('lastRecordIndex: ', lastRecordIndex)
+        // 只取 lastRecordIndex + 1筆資料
+        V.lapRecords.splice(lastRecordIndex + 1, (V.lapRecords.length - (lastRecordIndex + 1)))
+      }
+    })
+    return result
   }
 }
 export default processData
