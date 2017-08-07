@@ -40,7 +40,7 @@ const render = {
       }
       case 'started': {
         return <span className={css.raceCtrl}>
-          {(race.result.laps === race.laps)
+          {(processData.canStopRace(race.result, race.laps))
             ? <Button style='short' text='結束比賽' onClick={handleEndRace} />
             : <Button style='shortRed' text='結束比賽' onClick={handleUpdateDialog('endRace')} />
           }
@@ -193,7 +193,7 @@ export class MatchManager extends BaseComponent {
       editField: undefined
     }
     this.dispatch = this.props.dispatch
-    this._bind('socketIoEvents', 'getReaderStatus', 'countdown', 'handleChangeCountdown', 'handleControlReader', 'handleDragStart', 'handleDragOver', 'handleDragEnd', 'handleEditAdvnace', 'handleEndRace', 'handleRefreshRace', 'handleResize', 'handleSelect', 'handleStartRace', 'handleSubmitRaceOrder', 'handleSubmitResult', 'handleToggleEdit', 'handleUpdateDialog', 'handleResetRace', 'updateRecords', 'updateRaces')
+    this._bind('socketIoEvents', 'countdown', 'handleChangeCountdown', 'handleControlReader', 'handleDragStart', 'handleDragOver', 'handleDragEnd', 'handleEditAdvnace', 'handleEndRace', 'handleRefreshRace', 'handleResize', 'handleSelect', 'handleStartRace', 'handleSubmitRaceOrder', 'handleSubmitResult', 'handleToggleEdit', 'handleUpdateDialog', 'handleResetRace', 'updateRecords', 'updateRaces')
   }
   updateRaces () {
     const orderedRaces = processData.returnRacesByOrder(processData.returnRaces(this.props.event.groups), this.props.event.raceOrder)
@@ -228,13 +228,13 @@ export class MatchManager extends BaseComponent {
       const races = processData.returnRaces(this.props.event.groups)
       this.groupNames = processData.returnIdNameMap(this.props.event.groups)
       this.raceNames = processData.returnIdNameMap(races)
+      this.socketIoEvents(this.handleControlReader('getreaderstatus'))
       if (this.props.event.raceOrder.length === 0 || this.props.event.raceOrder.length < races.length) {
         const eventStateObj = { model: 'event', original: { id: this.props.event.id }, modified: { raceOrder: races.map(race => race.id) } }
         return this.dispatch(eventActions.submit(eventStateObj))
       }
       return this.updateRaces()
     }
-    this.socketIoEvents(this.getReaderStatus)
     if (!this.props.event) {
       return this.dispatch(eventActions.getEvent(this.props.match.params.id, onSuccess))
     }
@@ -257,7 +257,8 @@ export class MatchManager extends BaseComponent {
   }
   socketIoEvents (callback) {
     this.socketio.on('connect', function onConnect () {
-      this.socketio.get('/api/race/joinReaderRoom', function res () { if (callback !== undefined) { callback() } })
+      fetch(`/api/race/joinReaderRoom?isSocket=1&sid=${this.socketio.id}`, {credentials: 'same-origin'})
+      .then(V => { if (callback !== undefined) {callback()} })
     }.bind(this))
     this.socketio.on('readerstatus', function (data) {
       this.setState({readerStatus: (data.result && data.result.isSingulating) ? 'started' : 'idle'})
@@ -270,9 +271,6 @@ export class MatchManager extends BaseComponent {
       race.result = processData.returnRaceResult(race)
       this.setState({races: races})
     }.bind(this))
-  }
-  getReaderStatus () {
-    this.socketio.post(io.sails.url + '/api/race/readerRoom', { type: 'getreaderstatus' })
   }
   handleToggleEdit (field) {
     return (e) => {
@@ -337,7 +335,8 @@ export class MatchManager extends BaseComponent {
     }
   }
   handleControlReader (type) {
-    this.socketio.post(io.sails.url + '/api/race/readerRoom', { type: type, payload: { eventId: this.props.event.id } })
+    const returnPostHeader = (obj) => ({ method: 'post', credentials: 'same-origin', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify(obj) })
+    fetch(`/api/race/readerRoom?isSocket=1&sid=${this.socketio.id}`, returnPostHeader({ type: type, payload: { eventId: this.props.event.id } }))
   }
   handleStartRace () {
     const obj = { id: this.state.races[this.state.raceSelected].id, startTime: Date.now() + (this.state.countdown * 1000) }
@@ -374,7 +373,9 @@ export class MatchManager extends BaseComponent {
     this.dispatch(eventActions.controlRace('end', {id: this.state.races[this.state.raceSelected].id}, onSuccess))
   }
   handleSubmitResult () {
-    this.dispatch(eventActions.submitRaceResult(this.state.races[this.state.raceSelected], this.updateRaces))
+    let race = this.state.races[this.state.raceSelected]
+    race.result = processData.returnTrimmedResult(race.result, race.laps)
+    this.dispatch(eventActions.submitRaceResult(race, this.updateRaces))
   }
   handleSelect (index) {
     return (e) => {

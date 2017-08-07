@@ -108,14 +108,23 @@ export class PublicEvent extends BaseComponent {
   componentWillUnmount () {
     this.socketio.close()
   }
-  socketIoEvents (callback) {
+  socketIoEvents () {
+    this.socketio.on('connect', function onConnect () {
+      fetch(`/api/race/joinReaderRoom?isSocket=1&sid=${this.socketio.id}`, {credentials: 'same-origin'})
+    }.bind(this))
+
     this.socketio.on('raceupdate', function (data) {
       let races = this.state.races
-      let race = races[this.state.ongoingRace]
+      let ongoingRace = 0
+      let race
 
+      this.state.races.map((race, index) => {
+        if (race.id === data.result.id) { ongoingRace = index }
+      })
+      race = races[ongoingRace]
       race.recordsHashTable = data.result.recordsHashTable
       race.result = processData.returnRaceResult(race)
-      this.setState({races: races})
+      this.setState({races: races, ongoingRace: ongoingRace})
     }.bind(this))
   }
   handleRefreshRace (raceid) {
