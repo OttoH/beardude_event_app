@@ -1,3 +1,4 @@
+/* global fetch, SERVICE_URL */
 import React from 'react'
 import io from 'socket.io-client'
 import BaseComponent from '../BaseComponent'
@@ -175,7 +176,7 @@ const render = {
 export class MatchManager extends BaseComponent {
   constructor (props) {
     super(props)
-    this.socketio = io('http://localhost:1337')
+    this.socketio = io(SERVICE_URL)
     this.timer = 0
     this.rfidTimeout = 0
     this.groupNames = {}
@@ -258,7 +259,7 @@ export class MatchManager extends BaseComponent {
   socketIoEvents (callback) {
     this.socketio.on('connect', function onConnect () {
       fetch(`/api/race/joinReaderRoom?isSocket=1&sid=${this.socketio.id}`, {credentials: 'same-origin'})
-      .then(V => { if (callback !== undefined) {callback()} })
+      .then(V => { if (callback !== undefined) { callback() } })
     }.bind(this))
     this.socketio.on('readerstatus', function (data) {
       this.setState({readerStatus: (data.result && data.result.isSingulating) ? 'started' : 'idle'})
