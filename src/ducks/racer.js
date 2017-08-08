@@ -1,4 +1,4 @@
-/* global fetch */
+/* global fetch, SERVICE_URL */
 
 // types
 const CANCEL_EDIT = 'racer/CANCEL_EDIT'
@@ -19,7 +19,7 @@ export const actionCreators = {
   },
   getRacers: () => async (dispatch, getState) => {
     try {
-      const response = await fetch('/api/racer/getRacers', {credentials: 'same-origin'})
+      const response = await fetch(SERVICE_URL + '/api/racer/getRacers', {credentials: 'same-origin'})
       const res = await response.json()
 
       if (response.status === 200) {
@@ -40,7 +40,7 @@ export const actionCreators = {
       return dispatch({type: SELECT_RACERS, payload: {selectedIndex: index}})
     }
     try {
-      const response = await fetch('/api/racer/mgmtInfo/' + racerStore.racers[index].id, {credentials: 'same-origin'})
+      const response = await fetch(SERVICE_URL + '/api/racer/mgmtInfo/' + racerStore.racers[index].id, {credentials: 'same-origin'})
       const res = await response.json()
       if (response.status === 200) {
         return dispatch({type: SELECT_RACERS, payload: {...res, selectedIndex: index}})
@@ -54,7 +54,7 @@ export const actionCreators = {
     const store = getState().racer
     const racerId = store.racers[store.selectedIndex].id
     try {
-      const response = await fetch((racerId) ? '/api/racer/update' : '/api/racer/create', {
+      const response = await fetch((racerId) ? SERVICE_URL + '/api/racer/update' : SERVICE_URL + '/api/racer/create', {
         method: 'post',
         credentials: 'same-origin',
         headers: {
