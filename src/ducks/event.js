@@ -1,4 +1,4 @@
-/* global fetch */
+/* global fetch, SERVICE_URL */
 
 // types
 const ACTION_ERR = 'event/ACTION_ERR'
@@ -23,7 +23,7 @@ export const actionCreators = {
   delete: (state, successCallback) => async (dispatch) => {
     const types = { event: DELETE_EVENT, group: DELETE_GROUP, race: DELETE_RACE, reg: DELETE_REG }
     try {
-      const response = await fetch(`/api/${state.model}/delete/${state.original.id}`, {credentials: 'same-origin'})
+      const response = await fetch(`${SERVICE_URL}/api/${state.model}/delete/${state.original.id}`, {credentials: 'same-origin'})
       const res = await response.json()
       if (response.status === 200) {
         dispatch({type: types[state.model], payload: {...res, state: state}})
@@ -36,7 +36,7 @@ export const actionCreators = {
   },
   getEvents: () => async (dispatch) => {
     try {
-      const response = await fetch('/api/event/getEvents', {credentials: 'same-origin'})
+      const response = await fetch(`${SERVICE_URL}/api/event/getEvents`, {credentials: 'same-origin'})
       const res = await response.json()
       if (response.status === 200) {
         return dispatch({type: GET_EVENTS, payload: res})
@@ -52,7 +52,7 @@ export const actionCreators = {
       return successCallback()
     }
     try {
-      const response = await fetch(`/api/event/mgmtInfo/${id}`, {credentials: 'same-origin'})
+      const response = await fetch(`${SERVICE_URL}/api/event/mgmtInfo/${id}`, {credentials: 'same-origin'})
       const res = await response.json()
       if (response.status === 200) {
         dispatch({type: GET_EVENT, payload: {...res}})
@@ -68,7 +68,7 @@ export const actionCreators = {
   },
   getRace: (id) => async (dispatch) => {
     try {
-      const response = await fetch(`/api/race/mgmtInfo/${id}`, {credentials: 'same-origin'})
+      const response = await fetch(`${SERVICE_URL}/api/race/mgmtInfo/${id}`, {credentials: 'same-origin'})
       const res = await response.json()
       if (response.status === 200) {
         return dispatch({type: GET_RACE, payload: {...res}})
@@ -80,10 +80,10 @@ export const actionCreators = {
   },
   controlRace: (action, object, successCallback) => async (dispatch) => {
     try {
-      let response = await fetch(`/api/race/${action}`, returnPostHeader(object))
+      let response = await fetch(`${SERVICE_URL}/api/race/${action}`, returnPostHeader(object))
       let res = await response.json()
       if (response.status === 200) {
-        response = await fetch(`/api/race/mgmtInfo/${object.id}`, {credentials: 'same-origin'})
+        response = await fetch(`${SERVICE_URL}/api/race/mgmtInfo/${object.id}`, {credentials: 'same-origin'})
         res = await response.json()
         dispatch({type: CONTROL_RACE, payload: {...res, raceId: object.id, action: action}})
         if (successCallback !== undefined) {
@@ -100,7 +100,7 @@ export const actionCreators = {
     const types = { event: SUBMIT_EVENT, group: SUBMIT_GROUP, race: SUBMIT_RACE, reg: SUBMIT_REG }
     const pathname = (state.original.id) ? 'update' : 'create'
     try {
-      const response = await fetch(`/api/${state.model}/${pathname}`, returnPostHeader({...state.modified, id: state.original.id}))
+      const response = await fetch(`${SERVICE_URL}/api/${state.model}/${pathname}`, returnPostHeader({...state.modified, id: state.original.id}))
       const res = await response.json()
       if (response.status === 200) {
         dispatch({type: types[state.model], payload: {...res, state: state}})
@@ -119,10 +119,10 @@ export const actionCreators = {
       return obj
     })
     try {
-      let response = await fetch('/api/race/submitResult', returnPostHeader({ id: raceObj.id, result: raceObj.result, advance: returnRegsToRaces(raceObj) }))
+      let response = await fetch(`${SERVICE_URL}/api/race/submitResult`, returnPostHeader({ id: raceObj.id, result: raceObj.result, advance: returnRegsToRaces(raceObj) }))
       let res = await response.json()
       if (response.status === 200) {
-        response = await fetch('/api/group/mgmtInfo/' + raceObj.group, {credentials: 'same-origin'})
+        response = await fetch(`${SERVICE_URL}/api/group/mgmtInfo/${raceObj.group}`, {credentials: 'same-origin'})
         res = await response.json()
         dispatch({type: GET_GROUP, payload: {...res, id: raceObj.group}})
         return successCallback()
@@ -134,7 +134,7 @@ export const actionCreators = {
   },
   submitAdvancingRules: (state, successCallback) => async (dispatch) => {
     try {
-      const response = await fetch('/api/race/update', returnPostHeader({id: state.raceId, advancingRules: state.modified}))
+      const response = await fetch(`${SERVICE_URL}/api/race/update`, returnPostHeader({id: state.raceId, advancingRules: state.modified}))
       const res = await response.json()
       if (response.status === 200) {
         dispatch({type: GET_RACE, payload: {...res, state: state}})
@@ -147,10 +147,10 @@ export const actionCreators = {
   },
   submitRegsToRaces: (groupId, groupIndex, obj, successCallback) => async (dispatch, getState) => {
     try {
-      let response = await fetch('/api/race/assignRegsToRaces', returnPostHeader({races: obj}))
+      let response = await fetch(`${SERVICE_URL}/api/race/assignRegsToRaces`, returnPostHeader({races: obj}))
       let res = await response.json()
       if (response.status === 200) {
-        response = await fetch(`/api/group/mgmtInfo/${groupId}`, {credentials: 'same-origin'})
+        response = await fetch(`${SERVICE_URL}/api/group/mgmtInfo/${groupId}`, {credentials: 'same-origin'})
         res = await response.json()
         if (response.status === 200) {
           dispatch({type: GET_GROUP, payload: {...res, index: groupIndex}})
