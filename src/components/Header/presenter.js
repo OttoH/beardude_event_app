@@ -45,7 +45,7 @@ class Header extends BaseComponent {
     this.setState({showAccountMenu: !this.state.showAccountMenu})
   }
   render () {
-    const { account, location, match, isPublic } = this.props
+    const { account, location, match, isPublic, nav } = this.props
     if (!isPublic && account.isAuthenticated !== undefined && !account.isAuthenticated) {
       return <Redirect to={{ pathname: '/login', state: { from: location } }} />
     }
@@ -58,8 +58,8 @@ class Header extends BaseComponent {
           </Link>
         </h1>
       </div>
-      { this.props.account && this.props.account.manager && renderAccountInfo(this) }
-      { this.props.nav && renderNav(returnNavs[this.props.nav](match)) }
+      { account && account.manager && renderAccountInfo(this) }
+      { nav && renderNav(returnNavs[nav](match)) }
     </div>)
   }
 }

@@ -1,7 +1,15 @@
 var webpack = require('webpack')
 var path = require('path')
+var fs = require('fs')
 
 var HtmlWebpackPlugin = require('html-webpack-plugin')
+
+const browserBabelCfg = () => {
+  const babelCfg = JSON.parse(fs.readFileSync('./.babelrc', 'utf8'))
+  babelCfg.plugins.shift()
+  babelCfg.babelrc = false
+  return babelCfg
+}
 
 module.exports = {
   context: path.resolve(__dirname, './'),
@@ -12,6 +20,7 @@ module.exports = {
       'webpack-dev-server/client?http://localhost:3030',
       'webpack/hot/only-dev-server',
       'babel-polyfill',
+      'whatwg-fetch',
       './src/index.js'
     ]
   },
@@ -41,7 +50,7 @@ module.exports = {
         use: [
           {
             loader: 'babel-loader',
-            options: { presets: ['es2015', 'react', 'stage-3'] }
+            options: browserBabelCfg()
           }
         ]
 

@@ -1,5 +1,6 @@
 const webpack = require('webpack')
 const path = require('path')
+var fs = require('fs')
 
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const ManifestPlugin = require('webpack-manifest-plugin')
@@ -9,6 +10,13 @@ const CleanWebpackPlugin = require('clean-webpack-plugin')
 
 const publicPath = '/dist'
 const outputPath = path.join(__dirname, publicPath)
+
+const browserBabelCfg = () => {
+  const babelCfg = JSON.parse(fs.readFileSync('./.babelrc', 'utf8'))
+  babelCfg.plugins.shift()
+  babelCfg.babelrc = false
+  return babelCfg
+}
 
 const plugins = [
   new CleanWebpackPlugin([outputPath]),
@@ -64,7 +72,8 @@ module.exports = {
         exclude: /node_modules/,
         use: [
           {
-            loader: 'babel-loader'
+            loader: 'babel-loader',
+            options: browserBabelCfg()
           }
         ]
 
@@ -107,7 +116,7 @@ module.exports = {
       'babel-polyfill', './src/index'
     ],
     vendor: [
-      'react', 'react-dom', 'redux', 'react-redux', 'redux-thunk', 'url-search-params-polyfill', 'socket.io-client'
+      'react', 'react-dom', 'redux', 'react-redux', 'redux-thunk', 'url-search-params-polyfill', 'socket.io-client', 'whatwg-fetch'
     ]
   },
   devtool: 'source-map',
