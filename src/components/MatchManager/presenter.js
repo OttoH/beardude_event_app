@@ -140,7 +140,7 @@ const render = {
         <th className={css.no}>名次</th>
         <th className={css.name}>選手</th>
       </tr></thead>
-      <tbody>{race.result.map((record, index) => {
+      <tbody>{race && race.result && race.result.map((record, index) => {
         const reg = race.registrations.filter(V => (V.id === record.registration))[0]
         return reg ? <tr className={css.dashItem} key={'rec' + index}>
           <td className={css.no}>{index + 1}</td>
@@ -153,7 +153,7 @@ const render = {
       <thead><tr>
         {processData.returnLapLabels(race.laps).map((V, I) => <th key={'th-' + I}>{V}</th>)}
       </tr></thead>
-      <tbody>{race.result.map((record, index) => <tr key={'tr' + record.registration} className={css.dashItem}>
+      <tbody>{race && race.result && race.result.map((record, index) => <tr key={'tr' + record.registration} className={css.dashItem}>
         {record.lapRecords.map((time, index) => <td key={'record-' + index} className={css.lap}>{time}</td>)}
       </tr>)}</tbody>
     </table>,
@@ -164,11 +164,11 @@ const render = {
     </table>,
     advance: ({race, raceNames}) => <table className={css.dashTable}>
       <thead><tr><th><span>{race.isFinalRace ? '總排名' : '晉級資格'}</span></th></tr></thead>
-      <tbody>{race.result.map((record, index) => <tr key={'adv' + index} className={css.dashItem}><td className={css.center}>{race.isFinalRace ? index + 1 : raceNames[record.advanceTo]}</td></tr>)}</tbody>
+      <tbody>{race && race.result && race.result.map((record, index) => <tr key={'adv' + index} className={css.dashItem}><td className={css.center}>{race.isFinalRace ? index + 1 : raceNames[record.advanceTo]}</td></tr>)}</tbody>
     </table>,
     edit: ({race, raceNames, handleDragStart, handleDragOver, handleDragEnd, handleEditAdvnace}) => <table className={css.dashTable}>
       <thead><tr><th><span>校正成績</span></th></tr></thead>
-      <tbody>{race.result.map((record, index) => <tr key={'adv' + index} className={css.dashItem}><td className={css.center}>{!race.isFinalRace && render.advanceMenu({advancingRules: race.advancingRules, raceNames, index, value: record.advanceTo, handleEditAdvnace})}<div className={css.dragHandle} draggable='true' onDragStart={handleDragStart(index)} onDragOver={handleDragOver(index)} onDragEnd={handleDragEnd} /></td></tr>)}</tbody>
+      <tbody>{race && race.result && race.result.map((record, index) => <tr key={'adv' + index} className={css.dashItem}><td className={css.center}>{!race.isFinalRace && render.advanceMenu({advancingRules: race.advancingRules, raceNames, index, value: record.advanceTo, handleEditAdvnace})}<div className={css.dragHandle} draggable='true' onDragStart={handleDragStart(index)} onDragOver={handleDragOver(index)} onDragEnd={handleDragEnd} /></td></tr>)}</tbody>
     </table>
   }
 }
@@ -258,8 +258,8 @@ export class MatchManager extends BaseComponent {
   }
   socketIoEvents (callback) {
     this.socketio.on('connect', function onConnect () {
-      fetch(`/api/race/joinReaderRoom?isSocket=1&sid=${this.socketio.id}`, {credentials: 'same-origin'})
-      .then(V => { if (callback !== undefined) { callback() } })
+      fetch(`/api/socket/mgmt?sid=${this.socketio.id}`, {credentials: 'same-origin'})
+      .then(V => { if (callback !== undefined) {callback()} })
     }.bind(this))
     this.socketio.on('readerstatus', function (data) {
       this.setState({readerStatus: (data.result && data.result.isSingulating) ? 'started' : 'idle'})
@@ -337,7 +337,7 @@ export class MatchManager extends BaseComponent {
   }
   handleControlReader (type) {
     const returnPostHeader = (obj) => ({ method: 'post', credentials: 'same-origin', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify(obj) })
-    fetch(`/api/race/readerRoom?isSocket=1&sid=${this.socketio.id}`, returnPostHeader({ type: type, payload: { eventId: this.props.event.id } }))
+    fetch(`/api/socket/mgmt?sid=${this.socketio.id}`, returnPostHeader({ type: type, payload: { eventId: this.props.event.id } }))
   }
   handleStartRace () {
     const obj = { id: this.state.races[this.state.raceSelected].id, startTime: Date.now() + (this.state.countdown * 1000) }

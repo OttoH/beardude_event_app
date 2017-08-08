@@ -27,7 +27,7 @@ const render = {
         <th className={css.no}>名次</th>
         <th className={css.name}>選手</th>
       </tr></thead>
-      <tbody>{race.result.map((record, index) => {
+      <tbody>{race && race.result && race.result.map((record, index) => {
         const reg = race.registrations.filter(V => (V.id === record.registration))[0]
         return reg ? <tr className={css.dashItem} key={'rec' + index}>
           <td className={css.no}>{index + 1}</td>
@@ -38,20 +38,20 @@ const render = {
     </table></div>,
     results: (race) => <table className={css.dashTable}>
       <thead><tr>
-        {processData.returnLapLabels(race.laps).map((V, I) => <th key={'th-' + I}>{V}</th>)}
+        {race && processData.returnLapLabels(race.laps).map((V, I) => <th key={'th-' + I}>{V}</th>)}
       </tr></thead>
-      <tbody>{race.result.map((record, index) => <tr key={'tr' + record.registration} className={css.dashItem}>
+      <tbody>{race && race.result && race.result.map((record, index) => <tr key={'tr' + record.registration} className={css.dashItem}>
         {record.lapRecords.map((time, index) => <td key={'record-' + index} className={css.lap}>{time}</td>)}
       </tr>)}</tbody>
     </table>,
     summary: (race) => <table className={css.dashTable}>
       <thead><tr><th>加總</th></tr></thead>
-      <tbody>{race.result.map((record, index) => <tr className={css.dashItem} key={'lap' + index}><td className={css.lap}>{record.sum}</td></tr>)}
+      <tbody>{race && race.result && race.result.map((record, index) => <tr className={css.dashItem} key={'lap' + index}><td className={css.lap}>{record.sum}</td></tr>)}
       </tbody>
     </table>,
     advance: ({race, raceNames}) => <table className={css.dashTable}>
-      <thead><tr><th><span>{race.isFinalRace ? '總排名' : '晉級資格'}</span></th></tr></thead>
-      <tbody>{race.result.map((record, index) => <tr key={'adv' + index} className={css.dashItem}><td className={css.center}>{race.isFinalRace ? index + 1 : raceNames[record.advanceTo]}</td></tr>)}</tbody>
+      <thead><tr><th><span>{race && race.isFinalRace ? '總排名' : '晉級資格'}</span></th></tr></thead>
+      <tbody>{race && race.result && race.result.map((record, index) => <tr key={'adv' + index} className={css.dashItem}><td className={css.center}>{race.isFinalRace ? index + 1 : raceNames[record.advanceTo]}</td></tr>)}</tbody>
     </table>
   }
 }
@@ -111,7 +111,7 @@ export class PublicEvent extends BaseComponent {
   }
   socketIoEvents () {
     this.socketio.on('connect', function onConnect () {
-      fetch(`/api/race/joinReaderRoom?isSocket=1&sid=${this.socketio.id}`, {credentials: 'same-origin'})
+      fetch(`/api/socket/info?sid=${this.socketio.id}`, {credentials: 'same-origin'})
     }.bind(this))
 
     this.socketio.on('raceupdate', function (data) {
@@ -151,8 +151,7 @@ export class PublicEvent extends BaseComponent {
     let dbSummary = ''
     let dbAdvance = ''
     let race
-
-    if (event === -1 || !match.params.id) { return <Redirect to={{pathname: '/'}} /> } else if (!event) { return <div><Header location={location} match={match} isPublic='1' /><div className={css.loading}>Loading...</div></div> }
+    if (!match.params.id) { return <Redirect to={{pathname: '/'}} /> } else if (!event) { return <div><Header location={location} match={match} isPublic='1' /><div className={css.loading}>Loading...</div></div> }
 
     if (raceSelected !== -1) {
       race = races[raceSelected]
