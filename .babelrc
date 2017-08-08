@@ -4,6 +4,12 @@
     "react"
   ],
   "plugins": [
+    [
+      "css-modules-transform", {
+        "generateScopedName": "[name]__[local]___[hash:base64:5]",
+        "extensions": [".css"]
+      }
+    ],
     "transform-object-rest-spread",
     "transform-async-to-generator"
   ]
