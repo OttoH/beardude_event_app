@@ -23,6 +23,9 @@ const plugins = [
   new webpack.EnvironmentPlugin({
     NODE_ENV: 'production'
   }),
+  new webpack.DefinePlugin({
+    'SERVICE_URL': JSON.stringify('http://azai.synology.me:8888')
+  }),
   new WebpackChunkHash(),
   new ManifestPlugin(),
   new webpack.optimize.UglifyJsPlugin({

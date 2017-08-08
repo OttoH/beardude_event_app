@@ -1,3 +1,4 @@
+/* global SERVICE_URL */
 import React from 'react'
 import io from 'socket.io-client'
 import BaseComponent from '../BaseComponent'
@@ -58,7 +59,7 @@ const render = {
 export class PublicEvent extends BaseComponent {
   constructor (props) {
     super(props)
-    this.socketio = io('http://localhost:1337')
+    this.socketio = io(SERVICE_URL)
     this.timer = 0
     this.groupNames = {}
     this.raceNames = {}
