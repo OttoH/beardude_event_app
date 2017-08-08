@@ -46,7 +46,6 @@ class Header extends BaseComponent {
   }
   render () {
     const { account, location, match, isPublic, nav } = this.props
-    // console.log(returnNavs[nav](match));
     if (!isPublic && account.isAuthenticated !== undefined && !account.isAuthenticated) {
       return <Redirect to={{ pathname: '/login', state: { from: location } }} />
     }
