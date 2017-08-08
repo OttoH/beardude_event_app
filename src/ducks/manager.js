@@ -19,7 +19,7 @@ export const actionCreators = {
   },
   getManagers: () => async (dispatch, getState) => {
     try {
-      const response = await fetch(SERVICE_URL + '/api/manager/getManagers', {credentials: 'same-origin'})
+      const response = await fetch(`${SERVICE_URL}/api/manager/getManagers`, {credentials: 'same-origin'})
       const res = await response.json()
 
       if (response.status === 200) {
@@ -40,7 +40,7 @@ export const actionCreators = {
       return dispatch({type: SELECT_MANAGER, payload: {selectedIndex: index}})
     }
     try {
-      const response = await fetch(SERVICE_URL + '/api/manager/mgmtInfo/' + managerStore.managers[index].id, {credentials: 'same-origin'})
+      const response = await fetch(`${SERVICE_URL}/api/manager/mgmtInfo/${managerStore.managers[index].id}`, {credentials: 'same-origin'})
       const res = await response.json()
       if (response.status === 200) {
         return dispatch({type: SELECT_MANAGER, payload: {...res, selectedIndex: index}})
@@ -54,7 +54,7 @@ export const actionCreators = {
     const store = getState().manager
     const managerId = store.managers[store.selectedIndex].id
     try {
-      const response = await fetch((managerId) ? SERVICE_URL + '/api/manager/update' : SERVICE_URL + '/api/manager/create', {
+      const response = await fetch((managerId) ? `${SERVICE_URL}/api/manager/update` : `${SERVICE_URL}/api/manager/create`, {
         method: 'post',
         credentials: 'same-origin',
         headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },

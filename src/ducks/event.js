@@ -36,7 +36,7 @@ export const actionCreators = {
   },
   getEvents: () => async (dispatch) => {
     try {
-      const response = await fetch(SERVICE_URL + '/api/event/getEvents', {credentials: 'same-origin'})
+      const response = await fetch(`${SERVICE_URL}/api/event/getEvents`, {credentials: 'same-origin'})
       const res = await response.json()
       if (response.status === 200) {
         return dispatch({type: GET_EVENTS, payload: res})
@@ -119,10 +119,10 @@ export const actionCreators = {
       return obj
     })
     try {
-      let response = await fetch(SERVICE_URL + '/api/race/submitResult', returnPostHeader({ id: raceObj.id, result: raceObj.result, advance: returnRegsToRaces(raceObj) }))
+      let response = await fetch(`${SERVICE_URL}/api/race/submitResult`, returnPostHeader({ id: raceObj.id, result: raceObj.result, advance: returnRegsToRaces(raceObj) }))
       let res = await response.json()
       if (response.status === 200) {
-        response = await fetch(SERVICE_URL + '/api/group/mgmtInfo/' + raceObj.group, {credentials: 'same-origin'})
+        response = await fetch(`${SERVICE_URL}/api/group/mgmtInfo/${raceObj.group}`, {credentials: 'same-origin'})
         res = await response.json()
         dispatch({type: GET_GROUP, payload: {...res, id: raceObj.group}})
         return successCallback()
@@ -134,7 +134,7 @@ export const actionCreators = {
   },
   submitAdvancingRules: (state, successCallback) => async (dispatch) => {
     try {
-      const response = await fetch(SERVICE_URL + '/api/race/update', returnPostHeader({id: state.raceId, advancingRules: state.modified}))
+      const response = await fetch(`${SERVICE_URL}/api/race/update`, returnPostHeader({id: state.raceId, advancingRules: state.modified}))
       const res = await response.json()
       if (response.status === 200) {
         dispatch({type: GET_RACE, payload: {...res, state: state}})
@@ -147,7 +147,7 @@ export const actionCreators = {
   },
   submitRegsToRaces: (groupId, groupIndex, obj, successCallback) => async (dispatch, getState) => {
     try {
-      let response = await fetch(SERVICE_URL + '/api/race/assignRegsToRaces', returnPostHeader({races: obj}))
+      let response = await fetch(`${SERVICE_URL}/api/race/assignRegsToRaces`, returnPostHeader({races: obj}))
       let res = await response.json()
       if (response.status === 200) {
         response = await fetch(`${SERVICE_URL}/api/group/mgmtInfo/${groupId}`, {credentials: 'same-origin'})

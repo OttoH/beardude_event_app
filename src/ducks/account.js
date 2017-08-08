@@ -11,7 +11,7 @@ const LOGIN_ERR = 'manager/LOGIN_ERR'
 export const actionCreators = {
   accountInfo: () => async (dispatch, getState) => {
     try {
-      const response = await fetch(SERVICE_URL + '/api/manager/account', {credentials: 'same-origin'})
+      const response = await fetch(`${SERVICE_URL}/api/manager/account`, {credentials: 'same-origin'})
       const res = await response.json()
 
       if (response.status === 200) {
@@ -38,7 +38,7 @@ export const actionCreators = {
     delete credentials.error
     fetchObject.body = JSON.stringify(credentials)
     try {
-      const response = await fetch(SERVICE_URL + '/api/manager/login', fetchObject)
+      const response = await fetch(`${SERVICE_URL}/api/manager/login`, fetchObject)
       const res = await response.json()
 
       if (response.status === 200) {
@@ -51,7 +51,7 @@ export const actionCreators = {
   },
   logout: () => async (dispatch, getState) => {
     try {
-      const response = await fetch(SERVICE_URL + '/api/manager/logout', {credentials: 'same-origin'})
+      const response = await fetch(`${SERVICE_URL}/api/manager/logout`, {credentials: 'same-origin'})
       const res = await response.json()
 
       if (response.status === 200) {
