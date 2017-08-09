@@ -201,10 +201,10 @@ export class EventManager extends BaseComponent {
       window.addEventListener('keypress', this.handleKeypress)
       window.addEventListener('keyup', this.handleKeyup)
     }
-    if (this.props.match.params.id === 'new') {
-      this.dispatch(eventActions.getEvent(this.props.match.params.id, onSuccess))
+    if (this.props.match.params.uniqueName === 'new') {
+      this.dispatch(eventActions.getEvent(this.props.match.params.uniqueName, onSuccess))
     } else {
-      this.dispatch(eventActions.getEvent(this.props.match.params.id))
+      this.dispatch(eventActions.getEvent(this.props.match.params.uniqueName))
     }
 //    this.dispatch(racerActions.getRacers())
   }
@@ -224,7 +224,7 @@ export class EventManager extends BaseComponent {
     }
   }
   handleCancelEdit () {
-    if (this.props.match.params.id === 'new') { window.location = '/console' }
+    if (this.props.match.params.uniqueName === 'new') { window.location = '/console' }
     this.setState({model: undefined, modified: undefined, original: undefined})
   }
   handleDelete (model) {
@@ -312,7 +312,7 @@ export class EventManager extends BaseComponent {
   render () {
     const { location, event, match } = this.props
     const { modified, original, model, groupSelected, rfidMessage } = this.state
-    if (!match.params.id) { return <Redirect to={{pathname: '/console'}} /> } else if (!event) { return <div><Header location={location} nav='event' match={match} /><div className={css.loading}>Loading...</div></div> } else if (model === -1) { return <Redirect to={{pathname: '/console/event/' + event.id}} /> }
+    if (!match.params.uniqueName) { return <Redirect to={{pathname: '/console'}} /> } else if (!event) { return <div><Header location={location} nav='event' match={match} /><div className={css.loading}>Loading...</div></div> } else if (model === -1) { return <Redirect to={{pathname: '/console/event/' + event.uniqueName}} /> }
 
     return (<div className={model ? css.fixed : css.wrap}><Header location={location} nav='event' match={match} />
       <div className={css.mainBody}>

@@ -102,7 +102,7 @@ export class PublicEvent extends BaseComponent {
     }
     this.socketIoEvents()
     if (!this.props.event) {
-      return this.dispatch(eventActions.getEvent(this.props.match.params.id, onSuccess))
+      return this.dispatch(eventActions.getEvent(this.props.match.params.uniqueName, onSuccess))
     }
     if (this.props.event !== -1) { return onSuccess() }
   }
@@ -151,7 +151,7 @@ export class PublicEvent extends BaseComponent {
     let dbSummary = ''
     let dbAdvance = ''
     let race
-    if (!match.params.id) { return <Redirect to={{pathname: '/'}} /> } else if (!event) { return <div><Header location={location} match={match} isPublic='1' /><div className={css.loading}>Loading...</div></div> }
+    if (!match.params.uniqueName) { return <Redirect to={{pathname: '/'}} /> } else if (!event) { return <div><Header location={location} match={match} isPublic='1' /><div className={css.loading}>Loading...</div></div> }
 
     if (raceSelected !== -1) {
       race = races[raceSelected]
