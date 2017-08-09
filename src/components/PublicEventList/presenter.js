@@ -10,7 +10,7 @@ const EventBrick = ({ events = [] }) =>
 events.length > 0
 ? events.map(raceEvent =>
   <li key={'event-' + raceEvent.id}>
-    <Button style='bigIcon' text={raceEvent.nameCht} url={'/event/' + raceEvent.id} />
+    <Button style='bigIcon' text={raceEvent.nameCht} url={'/event/' + raceEvent.uniqueName} />
   </li>)
 : null
 
