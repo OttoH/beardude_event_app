@@ -237,7 +237,7 @@ export class MatchManager extends BaseComponent {
       return this.updateRaces()
     }
     if (!this.props.event) {
-      return this.dispatch(eventActions.getEvent(this.props.match.params.id, onSuccess))
+      return this.dispatch(eventActions.getEvent(this.props.match.params.uniqueName, onSuccess))
     }
     return onSuccess()
   }
@@ -400,7 +400,7 @@ export class MatchManager extends BaseComponent {
     let raceCtrl = ''
     let race
 
-    if (event === -1 || !match.params.id) { return <Redirect to={{pathname: '/console'}} /> } else if (!event) { return <div><Header location={location} nav='event' match={match} /><div className={css.loading}>Loading...</div></div> }
+    if (event === -1 || !match.params.uniqueName) { return <Redirect to={{pathname: '/console'}} /> } else if (!event) { return <div><Header location={location} nav='event' match={match} /><div className={css.loading}>Loading...</div></div> }
 
     if (raceSelected !== -1) {
       race = races[raceSelected]

@@ -31,7 +31,7 @@ ReactDOM.render(
           <Route exact path='/event/:uniqueName' component={PublicEvent} />
           <Route exact path='/console' component={EventList} />
           <Route path='/console/event/:uniqueName' component={EventManager} />
-          <Route path='/console/eventMatch/:id' component={MatchManager} />
+          <Route path='/console/eventMatch/:uniqueName' component={MatchManager} />
           <Route path='/console/racer' component={Racer} />
           <Route path='/console/team' component={Team} />
           <Route path='/console/manager' component={Manager} />
