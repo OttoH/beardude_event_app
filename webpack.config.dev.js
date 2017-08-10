@@ -30,7 +30,7 @@ module.exports = {
       NODE_ENV: 'development'
     }),
     new webpack.DefinePlugin({
-      'SERVICE_URL': JSON.stringify('http://localhost:1337')
+      'SERVICE_URL': JSON.stringify('http://localhost:3030')
     }),
     new webpack.HotModuleReplacementPlugin(),
     new HtmlWebpackPlugin({
@@ -110,6 +110,16 @@ module.exports = {
     port: 3030,
     proxy: {
       '/api/**/**': {
+        target: 'http://localhost:1337',
+        secure: false,
+        changeOrigin: true
+      },
+      '/socket.io/**/**': {
+        target: 'http://localhost:1337',
+        secure: false,
+        changeOrigin: true
+      },
+      '/sockjs-node/**/**': {
         target: 'http://localhost:1337',
         secure: false,
         changeOrigin: true
