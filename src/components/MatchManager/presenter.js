@@ -230,7 +230,7 @@ export class MatchManager extends BaseComponent {
       this.groupNames = processData.returnIdNameMap(this.props.event.groups)
       this.raceNames = processData.returnIdNameMap(races)
       this.socketIoEvents(this.handleControlReader('getreaderstatus'))
-      if (this.props.event.raceOrder.length === 0 || this.props.event.raceOrder.length < races.length) {
+      if ((this.props.event.raceOrder && this.props.event.raceOrder.length === 0) || (this.props.event.raceOrder && this.props.event.raceOrder.length < races.length)) {
         const eventStateObj = { model: 'event', original: { id: this.props.event.id }, modified: { raceOrder: races.map(race => race.id) } }
         return this.dispatch(eventActions.submit(eventStateObj))
       }
@@ -259,7 +259,7 @@ export class MatchManager extends BaseComponent {
   socketIoEvents (callback) {
     this.socketio.on('connect', function onConnect () {
       fetch(`/api/socket/mgmt?sid=${this.socketio.id}`, {credentials: 'same-origin'})
-      .then(V => { if (callback !== undefined) {callback()} })
+      .then(V => { console.log('connect V: ', V); if (callback !== undefined) {callback()} })
     }.bind(this))
     this.socketio.on('readerstatus', function (data) {
       this.setState({readerStatus: (data.result && data.result.isSingulating) ? 'started' : 'idle'})
@@ -270,7 +270,7 @@ export class MatchManager extends BaseComponent {
 
       race.recordsHashTable = data.result.recordsHashTable
       race.result = processData.returnRaceResult(race)
-      this.setState({races: races})
+      this.setState({races: races}, function () { this.forceUpdate() }.bind(this))
     }.bind(this))
   }
   handleToggleEdit (field) {
