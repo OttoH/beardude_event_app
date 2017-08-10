@@ -16,10 +16,10 @@ Model:
 DEV (need two screen):
 
 one screen (API)
-> npm run start
+> sail lift
 
 the other (frontend)
-> npm run dev (enter rs if reload fail or seems strange)
+> npm start (enter rs if reload fail or seems strange)
 
 GO TO http://localhost:3030/
 
