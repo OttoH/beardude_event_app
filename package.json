@@ -4,10 +4,7 @@
   "description": "A bicycle race event manager",
   "main": "index.js",
   "scripts": {
-    "start": "webpack-dev-server --config webpack/webpack.config.dev.js",
-    "start_": "NODE_ENV=development babel-node ./src/app.js",
-    "dev": "nodemon -e xyz --config nodemon.dev.json",
-    "start_nodemon": "NODE_ENV=development nodemon",
+    "start": "nodemon -e xyz --config nodemon.dev.json",
     "clean": "rm -rf dist",
     "build": "NODE_ENV=production webpack --config webpack.config.prod.js;npm run build:server",
     "build:server": "NODE_ENV=production babel server.js --out-dir dist/",
