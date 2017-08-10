@@ -1,7 +1,9 @@
 var webpack = require('webpack')
 var path = require('path')
 var fs = require('fs')
-
+// Replace hostname with IP address if need access with IP address over LAN
+var hostname = 'localhost'
+var port = '3030'
 var HtmlWebpackPlugin = require('html-webpack-plugin')
 
 const browserBabelCfg = () => {
@@ -17,7 +19,7 @@ module.exports = {
   entry: {
     main: [
       'react-hot-loader/patch',
-      'webpack-dev-server/client?http://localhost:3030',
+      'webpack-dev-server/client?http://' + hostname + ':' + port,
       'webpack/hot/only-dev-server',
       'babel-polyfill',
       'whatwg-fetch',
@@ -30,7 +32,7 @@ module.exports = {
       NODE_ENV: 'development'
     }),
     new webpack.DefinePlugin({
-      'SERVICE_URL': JSON.stringify('http://localhost:3030')
+      'SERVICE_URL': JSON.stringify('http://' + hostname + ':' + port)
     }),
     new webpack.HotModuleReplacementPlugin(),
     new HtmlWebpackPlugin({
@@ -62,7 +64,7 @@ module.exports = {
             loader: 'url-loader',
             options: {
               limit: 10000,
-              publicPath: 'http://localhost:3030/'
+              publicPath: 'http://' + hostname + ':' + port + '/'
             }
           }
         ]
@@ -105,22 +107,23 @@ module.exports = {
   devServer: {
     contentBase: path.resolve(__dirname, './dist'),
     hot: true,
+    host: hostname,
     publicPath: '/',
     historyApiFallback: true,
-    port: 3030,
+    port: port,
     proxy: {
       '/api/**/**': {
-        target: 'http://localhost:1337',
+        target: 'http://' + hostname + ':1337',
         secure: false,
         changeOrigin: true
       },
       '/socket.io/**/**': {
-        target: 'http://localhost:1337',
+        target: 'http://' + hostname + ':1337',
         secure: false,
         changeOrigin: true
       },
       '/sockjs-node/**/**': {
-        target: 'http://localhost:1337',
+        target: 'http://' + hostname + ':1337',
         secure: false,
         changeOrigin: true
       }
