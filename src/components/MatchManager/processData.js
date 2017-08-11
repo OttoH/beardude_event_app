@@ -1,7 +1,7 @@
 const processData = {
   returnRaces: (groups) => {
     let races = []
-    groups.map(V => { races = races.concat(V.races) })
+    if (groups && groups.length > 0) { groups.map(V => { races = races.concat(V.races) }) }
     return races
   },
   returnRacesByOrder: (races, order) => {
@@ -11,7 +11,7 @@ const processData = {
   },
   returnIdNameMap: (objs) => {
     let result = {}
-    objs.map(obj => { result[obj.id.toString()] = obj.nameCht })
+    if (objs && objs.length > 0) { objs.map(obj => { result[obj.id.toString()] = obj.nameCht }) }
     return result
   },
   returnOngoingRace: (ongoingRaceId, orderedRaces) => {
@@ -115,8 +115,6 @@ const processData = {
     result.map(V => {
       let final = V
       if (V.lapRecords.length > (lastRecordIndex + 1)) {
-        console.log('found exception, V.lapRecords: ', V.lapRecords)
-        console.log('lastRecordIndex: ', lastRecordIndex)
         // 只取 lastRecordIndex + 1筆資料
         V.lapRecords.splice(lastRecordIndex + 1, (V.lapRecords.length - (lastRecordIndex + 1)))
       }
