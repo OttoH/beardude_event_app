@@ -244,6 +244,7 @@ export class MatchManager extends BaseComponent {
   componentWillUnmount () {
     this.socketio.close()
   }
+  shouldComponentUpdate () { return true }
   countdown () {
     const reset = () => {
       clearInterval(this.timer)
@@ -270,7 +271,7 @@ export class MatchManager extends BaseComponent {
 
       race.recordsHashTable = data.result.recordsHashTable
       race.result = processData.returnRaceResult(race)
-      this.setState({races: races}, function () { this.forceUpdate() }.bind(this))
+      this.setState({races: races})
     }.bind(this))
   }
   handleToggleEdit (field) {
