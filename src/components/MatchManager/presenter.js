@@ -1,7 +1,7 @@
 /* global fetch, SERVICE_URL */
 import React from 'react'
 import io from 'socket.io-client'
-import BaseComponent from '../BaseComponent'
+import { StandardComponent } from '../BaseComponent'
 import { Redirect } from 'react-router-dom'
 import { actionCreators as eventActions } from '../../ducks/event'
 
@@ -173,7 +173,7 @@ const render = {
   }
 }
 
-export class MatchManager extends BaseComponent {
+export class MatchManager extends StandardComponent {
   constructor (props) {
     super(props)
     this.socketio = io(SERVICE_URL)
@@ -244,7 +244,6 @@ export class MatchManager extends BaseComponent {
   componentWillUnmount () {
     this.socketio.close()
   }
-  shouldComponentUpdate () { return true }
   countdown () {
     const reset = () => {
       clearInterval(this.timer)
