@@ -271,6 +271,7 @@ export class EventManager extends BaseComponent {
             state.groupSelected = stateObj.groupSelected = this.props.event.groups.length
             break
           case 'race':
+            state.modified.event = this.props.event.id
             state.modified.group = this.props.event.groups[this.state.groupSelected].id
             state.raceSelected = stateObj.raceSelected = this.props.event.groups[this.state.groupSelected].races.length
             break

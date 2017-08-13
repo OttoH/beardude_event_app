@@ -1,5 +1,5 @@
 import React from 'react'
-import BaseComponent from '../BaseComponent'
+import { StandardComponent } from '../BaseComponent'
 import Button from '../Button'
 import { actionCreators as eventActions } from '../../ducks/event'
 
@@ -21,7 +21,7 @@ const returnInitStateObj = (group) => {
   return stateObj
 }
 
-class AssignReg extends BaseComponent {
+class AssignReg extends StandardComponent {
   constructor (props) {
     super(props)
     const stateObj = returnInitStateObj(props.group)

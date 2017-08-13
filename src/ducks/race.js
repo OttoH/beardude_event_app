@@ -10,7 +10,7 @@ const SUBMIT_RACE = 'event/SUBMIT_RACE'
 const returnPostHeader = (obj) => ({ method: 'post', credentials: 'same-origin', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify(obj) })
 // actions
 export const actionCreators = {
-  getRaces: (eventId) => async (dispatch) => {
+  getRaces: (query) => async (dispatch) => {
     try {
       const response = await fetch(`${SERVICE_URL}/api/races`, {credentials: 'same-origin'})
       const res = await response.json()
@@ -47,7 +47,7 @@ export const actionCreators = {
 
 // reducers
 const initialState = {
-  race: undefined
+  races: []
 }
 export const reducer = (state = initialState, action) => {
   const {type, payload} = action

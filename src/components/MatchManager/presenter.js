@@ -4,6 +4,8 @@ import io from 'socket.io-client'
 import { StandardComponent } from '../BaseComponent'
 import { Redirect } from 'react-router-dom'
 import { actionCreators as eventActions } from '../../ducks/event'
+import { actionCreators as raceActions } from '../../ducks/race'
+
 
 import css from './style.css'
 import { Dialogue } from '../Dialogue/presenter'
@@ -236,7 +238,7 @@ export class MatchManager extends StandardComponent {
       }
       return this.updateRaces()
     }
-    if (!this.props.event) {
+    if (!this.props.races) {
       return this.dispatch(eventActions.getEvent(this.props.match.params.uniqueName, onSuccess))
     }
     return onSuccess()
