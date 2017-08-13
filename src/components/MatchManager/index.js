@@ -3,7 +3,9 @@ import { MatchManager } from './presenter'
 
 const mapStateToProps = (state) => ({
   event: state.event.event,
-  races: state.races
+  groups: state.event.groups,
+  races: state.event.races,
+  registrations: state.event.registrations
 })
 
 export default connect(mapStateToProps)(MatchManager)
