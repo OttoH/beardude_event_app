@@ -2,6 +2,7 @@
 import React from 'react'
 import io from 'socket.io-client'
 import BaseComponent from '../BaseComponent'
+import { StandardComponent } from '../BaseComponent'
 import { Redirect } from 'react-router-dom'
 import { actionCreators as eventActions } from '../../ducks/event'
 
@@ -56,7 +57,7 @@ const render = {
   }
 }
 
-export class PublicEvent extends BaseComponent {
+export class PublicEvent extends StandardComponent {
   constructor (props) {
     super(props)
     this.socketio = io(SERVICE_URL)
@@ -106,6 +107,7 @@ export class PublicEvent extends BaseComponent {
     }
     if (this.props.event !== -1) { return onSuccess() }
   }
+
   componentWillUnmount () {
     this.socketio.close()
   }
