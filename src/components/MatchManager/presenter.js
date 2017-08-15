@@ -9,20 +9,10 @@ import { Dialogue } from '../Dialogue/presenter'
 import Button from '../Button'
 import Header from '../Header'
 
-const returnIdNameMap = (objs) => {
-  let result = {}
-  if (objs && objs.length > 0) { objs.map(obj => { result[obj.id.toString()] = obj.nameCht }) }
-  return result
-}
-const returnRegMap = (objs) => {
-  let result = {}
-  if (objs && objs.length > 0) { objs.map(obj => { result[obj.id.toString()] = { name: obj.name, raceNumber: obj.raceNumber } }) }
-  return result
-}
-const returnLapLabels = (laps) => {
-  let result = []
-  for (var i = 0; i < laps; i += 1) { result.push(i + 1) }
-  return result
+const canStopRace = (result, laps) => {
+  let canStop = true
+  result.map(V => { if (V.laps < laps) { canStop = false } })
+  return canStop
 }
 const returnMovedArray = (arr, oldIndex, newIndex) => {
   while (oldIndex < 0) { oldIndex += arr.length }
@@ -34,10 +24,9 @@ const returnMovedArray = (arr, oldIndex, newIndex) => {
   arr.splice(newIndex, 0, arr.splice(oldIndex, 1)[0])
   return arr
 }
-const canStopRace = (result, laps) => {
-  let canStop = true
-  result.map(V => { if (V.laps < laps) { canStop = false } })
-  return canStop
+const canStartRace = (ongoingRace, race) => {
+  if (ongoingRace === undefined && race.registrationIds.length > 0) { return true }
+  return false
 }
 const render = {
   advanceMenu: ({advancingRules, raceNames, value, handleEditAdvnace, index}) => <select defaultValue={value} onChange={handleEditAdvnace(index)}><option value='-1'>無</option>{advancingRules.map(rule => <option key={'rule' + rule.toRace} value={rule.toRace}>{raceNames[rule.toRace]}</option>)}</select>,
@@ -65,7 +54,7 @@ const render = {
   raceCtrl: ({race, readerStatus, editField, ongoingRace, handleEndRace, handleUpdateDialog, handleToggleEdit, modified}) => {
     switch (race.raceStatus) {
       case 'init': {
-        return <span className={css.raceCtrl}>{(ongoingRace === undefined) ? <Button style='short' text='開賽倒數' onClick={handleUpdateDialog('startCountdown')} /> : <Button text='開賽倒數' style='shortDisabled' />}<Button style='shortRed' text='重設比賽' onClick={handleUpdateDialog('cancelRace')} /></span>
+        return <span className={css.raceCtrl}>{(canStartRace(ongoingRace, race)) ? <Button style='short' text='開賽倒數' onClick={handleUpdateDialog('startCountdown')} /> : <Button text='開賽倒數' style='shortDisabled' />}<Button style='shortRed' text='重設比賽' onClick={handleUpdateDialog('cancelRace')} /></span>
       }
       case 'started': {
         return <span className={css.raceCtrl}>
@@ -160,25 +149,25 @@ const render = {
     </div>
   },
   dashboard: {
-    labels: (race) => <div className={css.dashId}><table className={css.dashTable}>
+    labels: (race, regNames) => <div className={css.dashId}><table className={css.dashTable}>
       <thead><tr>
-        <th className={css.no}>名次</th>
-        <th className={css.name}>選手</th>
+        <th key='lb-0' className={css.no}>名次</th>
+        <th key='lb-1' className={css.name}>選手</th>
       </tr></thead>
       <tbody>{race && race.result && race.result.map((record, index) => {
-        const reg = this.regNames[record.registration]
+        const reg = regNames[record.registration]
         return reg ? <tr className={css.dashItem} key={'rec' + index}>
           <td className={css.no}>{index + 1}</td>
           <td className={css.name}><span className={css.raceNumber}>{reg.raceNumber}</span> <span>{reg.name}</span></td>
-        </tr> : <tr />
+        </tr> : <tr key={'rec-na-' + index}></tr>
       })
       }</tbody>
     </table></div>,
     results: (race) => <table className={css.dashTable}>
       <thead><tr>
-        {returnLapLabels(race.laps).map((V, I) => <th key={'th-' + I}>{V}</th>)}
+      {race && race.result[0] && race.result[0].lapRecords.map((V, I) => <th key={'th-' + I}>{I + 1}</th>)}
       </tr></thead>
-      <tbody>{race && race.result && race.result.map((record, index) => <tr key={'tr' + record.registration} className={css.dashItem}>
+      <tbody>{race && race.result && race.result.map((record, index) => <tr key={'tr-rec-' + index} className={css.dashItem}>
         {record.lapRecords.map((time, index) => <td key={'record-' + index} className={css.lap}>{time}</td>)}
       </tr>)}</tbody>
     </table>,
@@ -203,9 +192,6 @@ export class MatchManager extends StandardComponent {
     super(props)
     this.timer = 0
     this.rfidTimeout = 0
-    this.groupNames = {}
-    this.raceNames = {}
-    this.regNames = {}
     this.modified = false
     this.state = {
       raceSelected: 0,
@@ -244,20 +230,22 @@ export class MatchManager extends StandardComponent {
   }
   componentDidMount () {
     const onSuccess = () => {
-      this.groupNames = returnIdNameMap(this.props.groups)
-      this.raceNames = returnIdNameMap(this.props.races)
-      this.regNames = returnRegMap(this.props.registrations)
       this.socketIoEvents(this.handleControlReader('getreaderstatus'))
       this.updateOngoingRaces()
     }
     this.socketio = io(SERVICE_URL)
     if (!this.props.event || this.props.event.uniqueName !== this.props.match.params.uniqueName) {
-      return this.dispatch(eventActions.getEventNew(this.props.match.params.uniqueName, onSuccess))
+      return this.dispatch(eventActions.getEvent(this.props.match.params.uniqueName, onSuccess))
     }
     return onSuccess()
   }
   componentWillUnmount () {
     this.socketio.close()
+  }
+  componentWillReceiveProps () {
+    if (this.props.event) {
+      this.updateOngoingRaces()
+    }
   }
   countdown () {
     const reset = () => {
@@ -279,7 +267,10 @@ export class MatchManager extends StandardComponent {
       this.setState({ readerStatus: (data.result && data.result.isSingulating) ? 'started' : 'idle' })
     }.bind(this))
     this.socketio.on('raceupdate', function (data) {
-      this.dispatch(eventActions.updateOngoingRace(data.result))
+      this.dispatch(eventActions.updateRaceOnTheFly(data))
+    }.bind(this))
+    this.socketio.on('raceresult', function (data) {
+      this.dispatch(eventActions.updateRaceResultOnTheFly(data))
     }.bind(this))
   }
   handleToggleEdit (field) {
@@ -383,10 +374,10 @@ export class MatchManager extends StandardComponent {
     return (e) => { if (this.state.editField === undefined) { this.setState({ raceSelected: index }) } }
   }
   render () {
-    const { location, event, match, races } = this.props
+    const { location, event, match, nameTables, races } = this.props
     const { counter, raceSelected, readerStatus, dialog, ongoingRace, countdown, editField } = this.state
-    const { groupNames, handleChangeCountdown, handleDragStart, handleDragOver, handleDragEnd, handleEditAdvnace, handleEndRace, handleResetRace, handleToggleEdit, handleSelect, handleStartRace, handleSubmitResult, handleUpdateDialog, modified, raceNames } = this
-
+    const { handleChangeCountdown, handleDragStart, handleDragOver, handleDragEnd, handleEditAdvnace, handleEndRace, handleResetRace, handleToggleEdit, handleSelect, handleStartRace, handleSubmitResult, handleUpdateDialog, modified } = this
+//    const {groupNames, raceNames, regNames } = this.props.nameTables
     if (event === -1 || !match.params.uniqueName) { return <Redirect to={{pathname: '/console'}} /> } else if (!event) { return <div><Header location={location} nav='event' match={match} /><div className={css.loading}>Loading...</div></div> }
 
     let race = races[raceSelected]
@@ -400,7 +391,7 @@ export class MatchManager extends StandardComponent {
         <div className={css.managerList}>
           <div>
             <div className={css.hd}>
-              {editField === 'raceOrder'
+            {editField === 'raceOrder'
               ? <span>
                 {modified === false ? <Button style='shortDisabled' text='儲存' /> : <Button style='short' onClick={this.handleSubmitRaceOrder} text='儲存' />}
                 <Button style='shortGrey' onClick={this.handleToggleEdit('raceOrder')} text='取消' />
@@ -408,15 +399,15 @@ export class MatchManager extends StandardComponent {
               : <Button style='short' text='編輯賽程' onClick={this.handleToggleEdit('raceOrder')} />
             }
             </div>
-            <ul className={css.ul}>{ races.map((race, index) => (editField === 'raceOrder') ? render.raceListDraggable({ race, index, raceSelected, groupNames, handleSelect, handleDragStart, handleDragOver, handleDragEnd }) : render.raceList({ race, index, raceSelected, groupNames, handleSelect })) }</ul>
+            <ul className={css.ul}>{ races.map((race, index) => (editField === 'raceOrder') ? render.raceListDraggable({ race, index, raceSelected, groupNames: nameTables.group, handleSelect, handleDragStart, handleDragOver, handleDragEnd }) : render.raceList({ race, index, raceSelected, groupNames: nameTables.group, handleSelect })) }</ul>
           </div>
-          {render.dashboard.labels(race)}
+          {render.dashboard.labels(race, nameTables.reg)}
           <div className={css.scrollBox}>{render.dashboard.results(race)}</div>
           <div className={css.summary}>{render.dashboard.summary(race)}</div>
           {(editField === 'raceResult')
-            ? <div className={css.editRank}>{ render.dashboard.edit({ race, raceNames, handleDragStart, handleDragOver, handleDragEnd, handleEditAdvnace }) }</div>
-            : <div className={css.advTable}>{render.dashboard.advance({race, raceNames})}</div>}
-            </div>}
+            ? <div className={css.editRank}>{ render.dashboard.edit({ race, raceNames: nameTables.race, handleDragStart, handleDragOver, handleDragEnd, handleEditAdvnace }) }</div>
+            : <div className={css.advTable}>{render.dashboard.advance({race, raceNames: nameTables.race})}</div>}
+            </div>
         </div>
         {dialog && <Dialogue content={render.dialog[dialog]({ countdown, counter, handleStartRace, handleUpdateDialog, handleChangeCountdown, handleResetRace, handleEndRace, handleSubmitResult })} />}
     </div>)
