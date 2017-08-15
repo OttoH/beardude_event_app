@@ -73,7 +73,6 @@ export default class Manager extends BaseComponent {
   }
   render () {
     const store = this.props.manager
-    console.log('store: ', store)
     const editBd = (store.managers && store.selectedIndex > -1 && store.managers[store.selectedIndex]) ? [
       render.section({ heading: '身份', inputs: returnBasicInputs(store, this.handleInput), key: 'sec-0' }),
       render.section({ heading: '更改密碼', inputs: returnPasswordInputs(store, this.handleInput), key: 'sec-1' }),
