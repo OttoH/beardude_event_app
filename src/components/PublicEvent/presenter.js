@@ -9,7 +9,6 @@ import { actionCreators as eventActions } from '../../ducks/event'
 import css from './style.css'
 import Header from '../Header'
 import Footer from '../Footer'
-import processData from '../MatchManager/processData'
 
 const render = {
   raceList: ({race, raceSelected, index, handleSelect, groupNames}) => {
@@ -23,13 +22,13 @@ const render = {
     </li>
   },
   dashboard: {
-    labels: (race) => <div className={css.dashId}><table className={css.dashTable}>
+    labels: (race, regNames) => <div className={css.dashId}><table className={css.dashTable}>
       <thead><tr>
         <th className={css.no}>名次</th>
         <th className={css.name}>選手</th>
       </tr></thead>
       <tbody>{race && race.result && race.result.map((record, index) => {
-        const reg = race.registrations.filter(V => (V.id === record.registration))[0]
+        const reg = regNames[record.registration]
         return reg ? <tr className={css.dashItem} key={'rec' + index}>
           <td className={css.no}>{index + 1}</td>
           <td className={css.name}><span className={css.raceNumber}>{reg.raceNumber}</span> <span>{reg.name}</span></td>
@@ -39,7 +38,7 @@ const render = {
     </table></div>,
     results: (race) => <table className={css.dashTable}>
       <thead><tr>
-        {race && processData.returnLapLabels(race.laps).map((V, I) => <th key={'th-' + I}>{V}</th>)}
+        {race && race.result[0].lapRecords.map((V, I) => <th key={'th-' + I}>{I + 1}</th>)}
       </tr></thead>
       <tbody>{race && race.result && race.result.map((record, index) => <tr key={'tr' + record.registration} className={css.dashItem}>
         {record.lapRecords.map((time, index) => <td key={'record-' + index} className={css.lap}>{time}</td>)}
@@ -60,108 +59,69 @@ const render = {
 export class PublicEvent extends StandardComponent {
   constructor (props) {
     super(props)
-    this.socketio = io(SERVICE_URL)
     this.timer = 0
-    this.groupNames = {}
-    this.raceNames = {}
     this.state = {
-      races: [],
-      raceSelected: -1,
-      ongoingRace: -1
+      raceSelected: 0,
+      ongoingRace: undefined
     }
     this.dispatch = this.props.dispatch
-    this._bind('socketIoEvents', 'handleRefreshRace', 'handleSelect', 'updateRecords', 'updateRaces')
+    this._bind('socketIoEvents', 'handleSelect', 'updateRecords', 'updateOngoingRaces')
   }
-  updateRaces () {
-    const orderedRaces = processData.returnRacesByOrder(processData.returnRaces(this.props.event.groups), this.props.event.raceOrder)
-    const ongoingRace = (this.state.ongoingRace === -1) ? ((this.props.event.ongoingRace === -1) ? undefined : processData.returnOngoingRace(this.props.event.ongoingRace, orderedRaces)) : this.state.ongoingRace
-    let stateObj = { races: orderedRaces, raceSelected: this.state.raceSelected, ongoingRace: ongoingRace, dialog: undefined, editField: undefined }
-    if (ongoingRace === undefined) {
-      clearInterval(this.timer)
-      if (stateObj.raceSelected === -1) { stateObj.raceSelected = processData.returnSelectedRace(orderedRaces) }
-    } else {
-      stateObj.raceSelected = ongoingRace
+  updateOngoingRaces () {
+    const returnOngoingRace = (ongoingRaceId, orderedRaces) => {
+      for (let i = 0; i < orderedRaces.length; i += 1) { if (orderedRaces[i].id === ongoingRaceId) { return i } }
+      return undefined
     }
-    this.setState(stateObj, function () {
-      if (this.state.races[this.state.raceSelected].result.length === 0) {
-        this.updateResult(this.state.raceSelected)
-      }
-    })
-  }
-  updateResult (index) {
-    let races = this.state.races
-    let race = races[index]
-    race.result = processData.returnRaceResult(race)
-    this.setState({races: races})
+    const returnSelectedRace = (orderedRaces) => {
+      for (var i = 0; i < orderedRaces.length; i += 1) { if (orderedRaces[i].raceStatus !== 'submitted') { return i } }
+    }
+    const ongoingRace = (this.props.event.ongoingRace === -1) ? undefined : returnOngoingRace(this.props.event.ongoingRace, this.props.races)
+    let stateObj = {
+      ongoingRace: ongoingRace,
+      raceSelected: (ongoingRace) ? ongoingRace : returnSelectedRace(this.props.races)
+    }
+    if (stateObj.ongoingRace === undefined) { clearInterval(this.timer) }
+    this.setState(stateObj)
   }
   componentDidMount () {
     const onSuccess = () => {
-      const races = processData.returnRaces(this.props.event.groups)
-      this.groupNames = processData.returnIdNameMap(this.props.event.groups)
-      this.raceNames = processData.returnIdNameMap(races)
-      return this.updateRaces()
+      this.socketIoEvents()
+      this.updateOngoingRaces()
     }
-    this.socketIoEvents()
-    if (!this.props.event) {
+    this.socketio = io(SERVICE_URL)
+    if (!this.props.event || this.props.event.uniqueName !== this.props.match.params.uniqueName) {
       return this.dispatch(eventActions.getEvent(this.props.match.params.uniqueName, onSuccess))
     }
-    if (this.props.event !== -1) { return onSuccess() }
+    return onSuccess()
   }
-
+  componentWillReceiveProps () {
+    if (this.props.event) {
+      this.updateOngoingRaces()
+    }
+  }
   componentWillUnmount () {
     this.socketio.close()
   }
-  socketIoEvents () {
-    this.socketio.on('connect', function onConnect () {
-      fetch(`/api/socket/info?sid=${this.socketio.id}`, {credentials: 'same-origin'})
+  socketIoEvents (callback) {
+    this.socketio.on('connect', function () {
+      fetch(`/api/socket/info?sid=${this.socketio.id}`, {credentials: 'same-origin'}).then(V => { if (callback !== undefined) { callback() } })
     }.bind(this))
-
     this.socketio.on('raceupdate', function (data) {
-      let races = this.state.races
-      let ongoingRace = 0
-      let race
-
-      this.state.races.map((race, index) => {
-        if (race.id === data.result.id) { ongoingRace = index }
-      })
-      race = races[ongoingRace]
-      race.recordsHashTable = data.result.recordsHashTable
-      race.result = processData.returnRaceResult(race)
-      this.setState({races: races, ongoingRace: ongoingRace})
+      this.dispatch(eventActions.updateRaceOnTheFly(data))
     }.bind(this))
-  }
-  handleRefreshRace (raceid) {
-    return (e) => {
-      this.dispatch(eventActions.getRace(raceid))
-    }
+    this.socketio.on('raceresult', function (data) {
+      this.dispatch(eventActions.updateRaceResultOnTheFly(data))
+    }.bind(this))
   }
   handleSelect (index) {
-    return (e) => {
-      this.setState({ raceSelected: index }, function () {
-        if (this.state.races[index].result.length === 0) {
-          this.updateResult(index)
-        }
-      })
-    }
+    return (e) => { this.setState({ raceSelected: index }) }
   }
   render () {
-    const { location, event, match } = this.props
-    const { races, raceSelected } = this.state
-    const { groupNames, handleSelect, raceNames } = this
-    let dbLabels = ''
-    let dbResults = ''
-    let dbSummary = ''
-    let dbAdvance = ''
-    let race
+    const { location, event, match, races, nameTables } = this.props
+    const { raceSelected } = this.state
     if (!match.params.uniqueName) { return <Redirect to={{pathname: '/'}} /> } else if (!event) { return <div><Header location={location} match={match} isPublic='1' /><div className={css.loading}>Loading...</div></div> }
+    const race = races[raceSelected]
 
-    if (raceSelected !== -1) {
-      race = races[raceSelected]
-      dbLabels = render.dashboard.labels(race)
-      dbResults = <div className={css.scrollBox}>{render.dashboard.results(race)}</div>
-      dbSummary = <div className={css.summary}>{render.dashboard.summary(race)}</div>
-      dbAdvance = <div className={css.advTable}>{render.dashboard.advance({race, raceNames})}</div>
-    }
     return (<div className={css.wrap}><Header isPublic='1' location={location} match={match} />
       <div className={css.mainBody}>
         <div className={css.info}>
@@ -171,10 +131,13 @@ export class PublicEvent extends StandardComponent {
           <div>
             <div className={css.hd}><span>賽程</span></div>
             <ul className={css.ul}>
-              {races.map((race, index) => render.raceList({ race, index, raceSelected, groupNames, handleSelect }))}
+              {races.map((race, index) => render.raceList({ race, index, raceSelected, groupNames: nameTables.group, handleSelect: this.handleSelect }))}
             </ul>
           </div>
-          {dbLabels}{dbResults}{dbSummary}{dbAdvance}
+          {render.dashboard.labels(race, nameTables.reg)}
+          <div className={css.scrollBox}>{render.dashboard.results(race)}</div>
+          <div className={css.summary}>{render.dashboard.summary(race)}</div>
+          <div className={css.advTable}>{render.dashboard.advance({race, raceNames: nameTables.race})}</div>
         </div>
       </div>
       <Footer />

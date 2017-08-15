@@ -1,5 +1,5 @@
 import React from 'react'
-import BaseComponent from '../BaseComponent'
+import {StandardComponent} from '../BaseComponent'
 import Button from '../Button'
 import { actionCreators as eventActions } from '../../ducks/event'
 
@@ -15,7 +15,8 @@ const validate = {
   incrementalRange: (rule) => (rule.rankTo >= rule.rankFrom) ? undefined : '名次必須從小到大做設定',
   startFromZero: (rules) => (rules[0].rankFrom === 0) ? undefined : '需從第一名開始設定晉級規則',
   noOverflow: (raceId, modifiedRules, toRace, races) => {
-    const advRules = races.map(race => (race.id === raceId) ? modifiedRules : race.advancingRules).reduce((sum, v) => sum.concat(v))
+    let advRules = races.map(race => (race.id === raceId) ? modifiedRules : race.advancingRules).reduce((sum, v) => sum.concat(v))
+    advRules = advRules.filter(V => (V.toRace === toRace))
     const sum = advRules.reduce((sum, V) => { return sum + (V.rankTo - V.rankFrom + 1) }, 0)
     let toRaceObj = races.filter(V => (V.id === toRace))[0]
     const toRaceName = (toRaceObj.nameCht) ? toRaceObj.nameCht : toRaceObj.name
@@ -30,18 +31,18 @@ const returnRankArray = (racerNumberAllowed) => {
   return options
 }
 const render = {
-  ruleItem: ({races, raceObj, rules, onEdit, onRemove, disabled, options}) => rules.map((V, index) => <tr key={'adv' + index}>
+  ruleItem: ({races, raceObj, rules, onEdit, onRemove, disabled, options}) => rules.map((V, index) => <tr key={'adv-' + V.rankFrom + '-' + V.rankTo + '-' + V.toRace + '-' + index}>
     <td>
-      從 <select value={V.rankFrom} disabled={disabled} onChange={onEdit({index, field: 'rankFrom'})}>
+      從 <select defaultValue={V.rankFrom} disabled={disabled} onChange={onEdit({index, field: 'rankFrom'})}>
         <option key='opt0'>名次...</option>
         {options.map(V => <option key={'opt' + V.label}value={V.value}>{V.label}</option>)}
       </select>
-      到 <select disabled={disabled} value={V.rankTo} onChange={onEdit({index, field: 'rankTo'})}>
+      到 <select disabled={disabled} defaultValue={V.rankTo} onChange={onEdit({index, field: 'rankTo'})}>
         <option key='opt0'>名次...</option>{options.map(V => <option key={'opt' + V.label}value={V.value}>{V.label}</option>)}
       </select>
     </td>
     <td>
-      <select disabled={disabled} onChange={onEdit({index, field: 'toRace'})} value={V.toRace}>
+      <select disabled={disabled} onChange={onEdit({index, field: 'toRace'})} defaultValue={V.toRace}>
         <option key='toRace0'>賽事...</option>
         {races.map((V) => { if ((V.id !== raceObj.id) && !V.isEntryRace) { return <option key={'toRace' + V.id} value={V.id}>{V.nameCht}</option> } })}
       </select>
@@ -50,9 +51,11 @@ const render = {
   </tr>)
 }
 
-class AdvRule extends BaseComponent {
+class AdvRule extends StandardComponent {
   constructor (props) {
     super(props)
+    this.groupId = props.groupId
+    this.races = this.props.races.filter(V => (V.group === props.groupId))
     this.state = {
       warning: undefined,
       raceId: undefined,
@@ -64,14 +67,18 @@ class AdvRule extends BaseComponent {
   }
   handleSubmit () {
     if (this.state.canSubmit) {
-      const successCallback = () => this.setState({raceId: undefined, modified: undefined})
+      const races = this.props.races
+      const successCallback = () => {
+        this.races = this.props.races.filter(V => (V.group === this.groupId))
+        this.setState({raceId: undefined, modified: undefined})
+      }
       this.dispatch(eventActions.submitAdvancingRules(this.state, successCallback))
     }
   }
   handleToggle (raceObj, index) {
     return (e) => {
       if (this.state.raceId === raceObj.id) {
-        return this.setState({raceId: undefined, raceSelected: -1, modified: undefined, warning: undefined})
+        return this.setState({raceId: undefined, modified: undefined, warning: undefined})
       }
       this.setState({raceId: raceObj.id, raceSelected: index, modified: [...raceObj.advancingRules]})
     }
@@ -83,9 +90,9 @@ class AdvRule extends BaseComponent {
   }
   handleRemove ({index}) {
     return (e) => {
-      let stateObj = { modified: this.state.modified, warning: undefined, canSubmit: true }
-
+      let stateObj = { modified: [...this.state.modified], warning: undefined, canSubmit: true }
       stateObj.modified.splice(index, 1)
+
       if (stateObj.modified.length > 0) {
         stateObj.warning = validate.startFromZero(stateObj.modified)
         if (stateObj.warning) {
@@ -96,15 +103,18 @@ class AdvRule extends BaseComponent {
         if (stateObj.warning) {
           stateObj.canSubmit = false
         }
-        this.setState(stateObj)
       }
+      this.setState(stateObj)
     }
   }
   handleEdit ({index, field}) {
     return (e) => {
       let stateObj = { modified: this.state.modified, warning: undefined, canSubmit: true }
-
-      stateObj.modified[index][field] = parseInt(e.target.value)
+      if (field === 'toRace') {
+        stateObj.modified[index][field] = e.target.value
+      } else {
+        stateObj.modified[index][field] = parseInt(e.target.value)
+      }
       if (validate.ruleCompleted(stateObj.modified[index])) {
         stateObj.warning = validate.startFromZero(stateObj.modified)
         if (stateObj.warning) {
@@ -119,7 +129,7 @@ class AdvRule extends BaseComponent {
         if (stateObj.warning) {
           return this.setState(stateObj)
         }
-        stateObj.warning = validate.noOverflow(this.state.raceId, stateObj.modified, stateObj.modified[index].toRace, this.props.races)
+        stateObj.warning = validate.noOverflow(this.state.raceId, stateObj.modified, stateObj.modified[index].toRace, this.races)
       } else {
         stateObj.canSubmit = false
       }
@@ -128,7 +138,7 @@ class AdvRule extends BaseComponent {
   }
 
   render () {
-    const { races } = this.props
+    const { races } = this
     const { canSubmit, warning, raceId, modified } = this.state
 
     return (<div className={css.advTable}>
