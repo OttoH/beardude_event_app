@@ -3,7 +3,7 @@ import AdvRule from './presenter'
 
 const mapStateToProps = (state) => {
   return {
-    event: state.event
+    races: state.event.races
   }
 }
 
