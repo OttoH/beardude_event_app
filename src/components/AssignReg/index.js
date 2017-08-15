@@ -3,7 +3,8 @@ import AssignReg from './presenter'
 
 const mapStateToProps = (state) => {
   return {
-    event: state.event
+    races: state.event.races,
+    registrations: state.event.registrations
   }
 }
 

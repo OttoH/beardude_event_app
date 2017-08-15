@@ -5,18 +5,35 @@ import { actionCreators as eventActions } from '../../ducks/event'
 
 import css from './style.css'
 
-const returnInitStateObj = (group) => {
+const returnInitStateObj = (racesRaw, regsRaw, groupId) => {
+  const racesFiltered = racesRaw.filter(V => (V.group === groupId))
+  const regsFiltered = regsRaw.filter(V => (V.group === groupId))
   let races = {}
+  let regs = [...regsRaw]
   let stateObj = { entrysRegs: [], rematchsRegs: [], finalRegs: [], unassignedRegs: [{ regs: [] }] }
 
-  group.races.map(V => { races[V.id] = { regs: [], name: V.name, nameCht: V.nameCht, isEntryRace: V.isEntryRace, isFinalRace: V.isFinalRace, racerNumberAllowed: V.racerNumberAllowed } })
-  group.registrations.map(reg => {
+  racesFiltered.map(V => { races[V.id] = {...V, regs: []} })
+  regsFiltered.map(reg => {
     const regObj = {id: reg.id, name: reg.name, raceNumber: reg.raceNumber}
-    if (reg.races.length === 0) { stateObj.unassignedRegs[0].regs.push(regObj) } else { reg.races.map(race => { races[race.id].regs.push(regObj) }) }
+    let found
+    racesRaw.map(V => {
+      V.registrationIds.map(regId => {
+        if (regId === regObj.id) {
+          races[V.id].regs.push(regObj)
+          found = true
+        }
+      })
+    })
+    if (!found) { stateObj.unassignedRegs[0].regs.push(regObj) }
   })
   for (let id in races) {
-    const raceObj = {id: id, name: races[id].name, nameCht: races[id].nameCht, regs: races[id].regs, racerNumberAllowed: races[id].racerNumberAllowed}
-    if (races[id].isEntryRace) { stateObj.entrysRegs.push(raceObj) } else if (races[id].isFinalRace) { stateObj.finalRegs.push(raceObj) } else { stateObj.rematchsRegs.push(raceObj) }
+    if (races[id].isEntryRace) {
+      stateObj.entrysRegs.push(races[id])
+    } else if (races[id].isFinalRace) {
+      stateObj.finalRegs.push(races[id])
+    } else {
+      stateObj.rematchsRegs.push(races[id])
+    }
   }
   return stateObj
 }
@@ -24,28 +41,25 @@ const returnInitStateObj = (group) => {
 class AssignReg extends StandardComponent {
   constructor (props) {
     super(props)
-    const stateObj = returnInitStateObj(props.group)
+    this.groupId = props.groupId
+    const stateObj = returnInitStateObj(this.props.races, this.props.registrations, this.groupId)
     this.state = {
       entrysRegs: stateObj.entrysRegs,
       rematchsRegs: stateObj.rematchsRegs,
       finalRegs: stateObj.finalRegs,
       unassignedRegs: stateObj.unassignedRegs,
       autoAssign: false,
-      modified: false,
-      original: {
-        entrysRegs: [...stateObj.entrysRegs],
-        unassignedRegs: [...stateObj.unassignedRegs]
-      }
+      modified: false
     }
     // {id: ID, regs: []}
     this.dispatch = this.props.dispatch
-    this._bind('handleAutoAssign', 'handleRestore', 'handleDragStart', 'handleDragOver', 'handleDragEnd', 'handleSubmit')
+    this._bind('handleAutoAssign', 'handleDragStart', 'handleDragOver', 'handleDragEnd', 'handleSubmit', 'initializeState')
   }
   handleAutoAssign () {
 //    const shuffleArray = (arr) => arr.sort(() => (Math.random() - 0.5))
     let stateObj = {autoAssign: true, entrysRegs: [...this.state.entrysRegs], unassignedRegs: [...this.state.unassignedRegs], modified: true}
-    const slots = Math.floor(this.props.group.registrations.length / stateObj.entrysRegs.length)
-
+    const groupRegs = this.props.registrations.filter(V => (V.group === this.props.group.id))
+    const slots = Math.floor(groupRegs.length / stateObj.entrysRegs.length)
     stateObj.entrysRegs.map((race, i) => {
       const availableSlots = slots - race.regs.length
       let newRegs = stateObj.unassignedRegs[0].regs.splice(0, availableSlots)
@@ -61,16 +75,9 @@ class AssignReg extends StandardComponent {
     this.setState(stateObj)
   }
   handleSubmit () {
-    const onSuccess = (group) => {
-      const stateObj = returnInitStateObj(group)
-      this.setState({...stateObj,
-        autoAssign: false,
-        modified: false,
-        original: {
-          entrysRegs: stateObj.entrysRegs,
-          unassignedRegs: stateObj.unassignedRegs
-        }
-      })
+    const onSuccess = () => {
+      const stateObj = returnInitStateObj(this.props.races, this.props.registrations, this.groupId)
+      this.setState({...stateObj, autoAssign: false, modified: false })
     }
     let submitObject = []
     this.state.entrysRegs.map(race => {
@@ -91,12 +98,11 @@ class AssignReg extends StandardComponent {
       }
     })
     if (submitObject.length > 0) {
-      this.dispatch(eventActions.submitRegsToRaces(this.props.group.id, this.props.groupIndex, submitObject, onSuccess))
+      this.dispatch(eventActions.submitRegsToRaces(submitObject, onSuccess))
     } else {
       this.setState({modified: false})
     }
   }
-  shouldComponentUpdate () { return true }
   handleDragStart (fromState, itemIndex, fromIndex) {
     return (e) => {
       this.itemIndex = itemIndex
@@ -125,7 +131,7 @@ class AssignReg extends StandardComponent {
     const { itemIndex, fromState, fromIndex, toState, toIndex } = this
     if (fromState === toState && fromIndex === toIndex) { return }
     // 處理 toState
-    let reg = stateObj[fromState][fromIndex].regs[itemIndex]
+    const reg = stateObj[fromState][fromIndex].regs[itemIndex]
     let existingReg = returnExistingReg(reg, stateObj[toState][toIndex].regs)
     if (existingReg && existingReg.toRemove) {
       delete existingReg.toRemove
@@ -142,7 +148,6 @@ class AssignReg extends StandardComponent {
   }
   render () {
     const { modified, unassignedRegs, entrysRegs, rematchsRegs, finalRegs } = this.state
-
     const renderMoveBit = ({stateName, reg, regIndex, raceIndex}) => <li className={(reg.toAdd || reg.toRemove) ? css.modifiedMoveBit : css.moveBit} draggable='true' key={'move' + reg.id} onDragStart={this.handleDragStart(stateName, regIndex, raceIndex)} onDragEnd={this.handleDragEnd}>{reg.raceNumber} {(reg.nameCht) ? reg.nameCht : reg.name}</li>
 
     return (<div className={css.assignReg}>
@@ -154,7 +159,7 @@ class AssignReg extends StandardComponent {
             <div className={css.auto}><Button style='shortGrey' text='自動分配選手' onClick={this.handleAutoAssign} /></div>
           }
           <h5 className={css.inlineB}>尚未分組</h5>
-          <ul>{unassignedRegs[0].regs.map((reg, regIndex) => (renderMoveBit({ stateName: 'unassignedRegs', reg, regIndex, raceIndex: 0 })))}</ul>
+          <ul>{unassignedRegs[0].regs.map((reg, regIndex) => (!reg.toRemove) && (renderMoveBit({ stateName: 'unassignedRegs', reg, regIndex, raceIndex: 0 })))}</ul>
         </div>
         <label className={css.inlineB}>初賽</label>
         <ul className={css.races}>{entrysRegs.map((race, raceIndex) => <li key={`race${race.id}`} onDragOver={this.handleDragOver('entrysRegs', raceIndex)}>
@@ -162,6 +167,16 @@ class AssignReg extends StandardComponent {
           <ul>{race.regs.map((reg, regIndex) => (!reg.toRemove) && (renderMoveBit({stateName: 'entrysRegs', reg, regIndex, raceIndex})))}</ul>
         </li>)}</ul>
       </div>
+      <div className={css.boxFt}>
+        {modified ? <Button onClick={this.handleSubmit} text='儲存' /> : <Button style='disabled' text='儲存' />}
+        <Button style='grey' onClick={this.props.handleCancelEdit} text='關閉' />
+      </div>
+    </div>)
+  }
+}
+
+export default AssignReg
+/*
       {(rematchsRegs.length > 0) && <div>
         <label>複賽</label>
         <ul className={css.races}>{rematchsRegs.map(race => <li key={`race${race.id}`}>
@@ -176,12 +191,4 @@ class AssignReg extends StandardComponent {
           <ul>{race.regs.map(reg => <li key={`reg${reg.id}`} className={css.moveBit}>{(reg.nameCht ? reg.nameCht : reg.name)}</li>)}</ul>
         </li>)}</ul>
       </div>
-      <div className={css.boxFt}>
-        {modified ? <Button onClick={this.handleSubmit} text='儲存' /> : <Button style='disabled' text='儲存' />}
-        <Button style='grey' onClick={this.props.handleCancelEdit} text='關閉' />
-      </div>
-    </div>)
-  }
-}
-
-export default AssignReg
+*/
