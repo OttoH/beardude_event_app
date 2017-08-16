@@ -61,8 +61,8 @@ const returnInputs = {
   ],
   reg: () => [
 //    {label: '選手 ID', field: 'racer', type: 'number', disabled: true},
-    {label: '稱呼方式', field: 'name', type: 'text'},
-    {label: '選手號碼', field: 'raceNumber', type: 'number'}
+    {label: '稱呼方式', field: 'name', type: 'text'}
+//    {label: '選手號碼', field: 'raceNumber', type: 'number'}
   ]
 }
 const title = { event: '活動', group: '組別', race: '賽事', reg: '選手' }
