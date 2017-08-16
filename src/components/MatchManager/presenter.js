@@ -165,19 +165,19 @@ const render = {
     </table></div>,
     results: (race) => <table className={css.dashTable}>
       <thead><tr>
-      {race && race.result[0] && race.result[0].lapRecords.map((V, I) => <th key={'th-' + I}>{I + 1}</th>)}
+        {race && race.result[0] && race.result[0].lapRecords.map((V, I) => <th key={'th-' + I}>{I + 1}</th>)}
       </tr></thead>
-      <tbody>{race && race.result && race.result.map((record, index) => <tr key={'tr-rec-' + index} className={css.dashItem}>
+      <tbody>{race && race.result.length > 0 && race.result.map((record, index) => <tr key={'tr-rec-' + index} className={css.dashItem}>
         {record.lapRecords.map((time, index) => <td key={'record-' + index} className={css.lap}>{time}</td>)}
       </tr>)}</tbody>
     </table>,
     summary: (race) => <table className={css.dashTable}>
       <thead><tr><th>加總</th></tr></thead>
-      <tbody>{race.result.map((record, index) => <tr className={css.dashItem} key={'lap' + index}><td className={css.lap}>{record.sum}</td></tr>)}
+      <tbody>{race && race.result && race.result.map((record, index) => <tr className={css.dashItem} key={'lap' + index}><td className={css.lap}>{record.sum}</td></tr>)}
       </tbody>
     </table>,
     advance: ({race, raceNames}) => <table className={css.dashTable}>
-      <thead><tr><th><span>{race.isFinalRace ? '總排名' : '晉級資格'}</span></th></tr></thead>
+      <thead><tr><th><span>{race && race.isFinalRace ? '總排名' : '晉級資格'}</span></th></tr></thead>
       <tbody>{race && race.result && race.result.map((record, index) => <tr key={'adv' + index} className={css.dashItem}><td className={css.center}>{race.isFinalRace ? index + 1 : raceNames[record.advanceTo]}</td></tr>)}</tbody>
     </table>,
     edit: ({race, raceNames, handleDragStart, handleDragOver, handleDragEnd, handleEditAdvnace}) => <table className={css.dashTable}>
@@ -235,7 +235,7 @@ export class MatchManager extends StandardComponent {
       this.updateOngoingRaces()
     }
     this.socketio = io(SERVICE_URL)
-    if (!this.props.event || this.props.event.uniqueName !== this.props.match.params.uniqueName) {
+    if (!this.props.event || (this.props.event.uniqueName !== this.props.match.params.uniqueName)) {
       return this.dispatch(eventActions.getEvent(this.props.match.params.uniqueName, onSuccess))
     }
     return onSuccess()
