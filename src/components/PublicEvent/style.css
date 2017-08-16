@@ -1,3 +1,8 @@
+.wrap {
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
 .mainBody {
   position: relative;
 }
@@ -11,12 +16,12 @@
 }
 .info {
   position: relative;
-  padding: 0 15px 15px 15px;
+  padding: 0;
   width: 100%;
   color: #fff;
 }
 .info h2 {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 300;
   letter-spacing: 0.4px;
   margin: 0 0 3px 0;
@@ -27,73 +32,63 @@
   display: flex;
   flex-direction: row;
   padding: 0;
-  color: #E0E4E9;
+  color: #fff;
   font-size: 14px;
-  border-top: 1px solid #fff;
+  border-top: 1px solid #555;
 }
 .managerList > div {
   position: relative;
   font-size: 0;
   vertical-align: top;
 }
-.managerList > div:first-child {
-  width: auto;
-  flex-shrink: 0;
-  border-bottom: 1px solid #fff;
-}
-.managerList > div:first-child .hd {
-  text-align: center;
-}
-.managerList > div:first-child h3 {
-  border-radius: 5px 0 0 0;
-}
-.managerList > div:last-child h3 {
-  border-radius: 0 5px 0 0;
-}
-.managerList > div:first-child ul button {
-  font-size: 13px;
-  margin: 0;
-  cursor: pointer;
-}
-.managerList h3 {
-  background: RGBA(66, 66, 66, 0.8);
-  color: #E0E4E9;
-  margin-right: 2px;
-  padding: 8px 16px;
-}
-.managerList .hd {
-  height: 32px;
-  line-height: 32px;
-  border-bottom: 1px solid #fff;
-  background: rgba(255, 255, 255, 0.4);
-  position: relative;
-}
-.managerList .ul li button {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
 @keyframes pulse {
   from { opacity: 0.1; }
   50% { opacity: 1; }
   to { opacity: 0.1; }
 }
-.ul .li {
+.raceSelector .li {
   position: relative;
-  display: flex;
+  display: inline-flex;
   color: #fff;
   height: 32px;
+  line-height: 32px;
+  text-align: left;
+  margin: 5px 0;
+  padding: 0 10px;
+  border: 1px solid transparent;
 }
-.ul .selected {
+.raceSelector .selected {
   position: relative;
-  display: flex;
+  display: inline-flex;
   color: #fff;
   height: 32px;
-  background: rgba(255,255,255, 0.4);
+  line-height: 32px;
+  text-align: left;
+  background: #333;
+  margin: 5px 0;
+  padding: 0 10px;
+  border-radius: 3px;
+  border: 1px solid #555;
+}
+.raceSelector .li button {
+  border-bottom: 0;
+  margin: 0;
+  padding: 0;
+}
+.raceSelector .selected button {
+  border-bottom: 0;
+  margin: 0;
+  padding: 0;
+}
+.raceSelector .selected button {
+  padding: 0;
+  border: 0;
 }
 .init {
-  display: block;
+  display: inline-block;
   content: "";
-  position: absolute;
-  right: 12px;
+  position: relative;
+  left: 0;
   top: 12px;
   border-radius: 10px;
   width: 8px;
@@ -163,7 +158,7 @@
 .dashItem {
   height: 32px;
   line-height: 32px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid #555;
 }
 .dashTable {
   background: 0;
@@ -174,18 +169,17 @@
   color: #fff;
 }
 .dashId {
-  border-left: 1px solid #fff;
-  border-bottom: 1px solid #fff;
+  border-bottom: 1px solid #555;
 }
 .dashTable thead {
-  background: rgba(255, 255, 255, 0.4);
+  background: #333
 }
 .dashTable th,
 .dashTable td {
   padding: 0 10px;
   height: 32px;
   border-left: 0;
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  border-right: 1px solid #555;
   min-width: 50px;
   font-size: 13px;
   position: relative;
@@ -193,6 +187,7 @@
 .dashTable th {
   height: 31px;
   white-space: nowrap;
+  border-bottom: 1px solid #555;
 }
 .dashTable tbody tr:first-child {
   height: 33px;
@@ -204,6 +199,7 @@
 }
 .dashTable .no {
   text-align: center;
+  background: #333;
 }
 .dashTable .name {
   white-space: nowrap;
@@ -221,36 +217,30 @@
 .scrollBox {
   overflow-x: scroll;
   overflow: auto;
-  border-left: 1px solid #fff;
-  border-bottom: 1px solid #fff;
+  border-bottom: 1px solid #555;
   flex-grow: 1;
 }
 .scrollBox table {
   width: 100%;
 }
-.scrollBox th:last-child,
-.scrollBox td:last-child {
-  border-right: 1px solid #fff;
-}
 .summary {
-  border-left: 1px solid #fff;
-  border-bottom: 1px solid #fff;
+  border-bottom: 1px solid #555;
+  background: #191919;
 }
 .summary .lap {
   padding: 0 10px;
   text-align: center;
 }
-.advTable,
-.editRank {
-  border-left: 1px solid #fff;
-  border-bottom: 1px solid #fff;
-}
-.editRank .dashTable td{
-  padding: 0 20px 0 10px;
-}
-.editRank select {
-  color: #000;
+.advTable {
+  border-bottom: 1px solid #555;
+  background: #191919;
 }
 .center {
   text-align: center;
+}
+.footer {
+  padding: 10px 0;
+  color: #fff;
+  font-size: 11px;
+  text-align :center;
 }

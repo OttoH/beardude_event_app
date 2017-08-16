@@ -25,7 +25,7 @@ class EventList extends React.PureComponent {
   render () {
     const { event, location } = this.props
     return (
-      <div>
+      <div className={css.wrap}>
         <Header location={location} nav='base' />
         <div className={css.mainBody}>
           <ul className={css.iconView}>

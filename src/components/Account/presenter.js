@@ -42,7 +42,7 @@ class Account extends BaseComponent {
       return <Redirect to={from} />
     }
 
-    return (<div>
+    return (<div className={css.wrap}>
       <div className={css.heading}>
         <h1 className={css.bdlogo}>
           <span className={css.logoB}>Beardude</span>
