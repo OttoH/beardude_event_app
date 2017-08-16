@@ -36,9 +36,9 @@ const render = {
     </table></div>,
     results: (race) => <table className={css.dashTable}>
       <thead><tr>
-        {race && race.result[0].lapRecords.map((V, I) => <th key={'th-' + I}>{I + 1}</th>)}
+        {race && race.result[0] && race.result[0].lapRecords.map((V, I) => <th key={'th-' + I}>{I + 1}</th>)}
       </tr></thead>
-      <tbody>{race && race.result && race.result.map((record, index) => <tr key={'tr' + record.registration} className={css.dashItem}>
+      <tbody>{race && (race.result.length > 0) && race.result.map((record, index) => <tr key={'tr-rec-' + record.registration} className={css.dashItem}>
         {record.lapRecords.map((time, index) => <td key={'record-' + index} className={css.lap}>{time}</td>)}
       </tr>)}</tbody>
     </table>,
@@ -88,7 +88,7 @@ export class PublicEvent extends StandardComponent {
       this.updateOngoingRaces()
     }
     this.socketio = io(SERVICE_URL)
-    if (!this.props.event || this.props.event.uniqueName !== this.props.match.params.uniqueName) {
+    if (!this.props.event || (this.props.event.uniqueName !== this.props.match.params.uniqueName)) {
       return this.dispatch(eventActions.getEvent(this.props.match.params.uniqueName, onSuccess))
     }
     return onSuccess()
@@ -119,7 +119,11 @@ export class PublicEvent extends StandardComponent {
     const { location, event, match, races, groups, nameTables } = this.props
     const { raceSelected } = this.state
     const showHeader = (location.search.indexOf('header=0') > -1) ? false : true
-    if (!match.params.uniqueName) { return <Redirect to={{pathname: '/'}} /> } else if (!event) { return <div><Header location={location} match={match} isPublic='1' /><div className={css.loading}>Loading...</div></div> }
+    if (!match.params.uniqueName) {
+      return <Redirect to={{pathname: '/'}} />
+    } else if (!event) {
+      return <div><Header location={location} match={match} isPublic='1' /><div className={css.loading}>Loading...</div></div>
+    }
     const race = races[raceSelected]
     return (<div className={css.wrap}>
       {showHeader && <Header isPublic='1' location={location} match={match} /> }
@@ -134,9 +138,7 @@ export class PublicEvent extends StandardComponent {
           </ul>
         </div>
         <div className={css.managerList}>
-          <div>
-
-          </div>
+          <div></div>
           {render.dashboard.labels(race, nameTables.reg)}
           <div className={css.scrollBox}>{render.dashboard.results(race)}</div>
           <div className={css.summary}>{render.dashboard.summary(race)}</div>

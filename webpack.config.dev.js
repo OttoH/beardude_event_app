@@ -2,7 +2,7 @@ var webpack = require('webpack')
 var path = require('path')
 var fs = require('fs')
 // Replace hostname with IP address if need access with IP address over LAN
-var hostname = '192.168.0.143'
+var hostname = 'localhost'
 var port = '3030'
 var HtmlWebpackPlugin = require('html-webpack-plugin')
 
