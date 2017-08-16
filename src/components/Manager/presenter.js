@@ -79,6 +79,6 @@ export default class Manager extends BaseComponent {
       render.section({ heading: '聯絡地址', inputs: returnAddressInputs(store, this.handleInput), key: 'sec-2' })
     ] : []
 
-    return (<div><Header location={this.props.location} nav='base' /><div className={css.mainBody}><Table list={store.managers} selectedIndex={store.selectedIndex} editBody={editBd} inEdit={(!!this.props.manager.inEdit)} readOnly={this.state.readOnly} handleSubmit={this.handleSubmit} handleEditToggle={this.handleEditToggle} listNameFunc={listNameFunc} handleSelect={this.handleSelect} handleCreate={this.handleCreate} /></div></div>)
+    return (<div className={css.wrap}><Header location={this.props.location} nav='base' /><div className={css.mainBody}><Table list={store.managers} selectedIndex={store.selectedIndex} editBody={editBd} inEdit={(!!this.props.manager.inEdit)} readOnly={this.state.readOnly} handleSubmit={this.handleSubmit} handleEditToggle={this.handleEditToggle} listNameFunc={listNameFunc} handleSelect={this.handleSelect} handleCreate={this.handleCreate} /></div></div>)
   }
 }

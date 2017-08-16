@@ -20,7 +20,9 @@ const returnNavs = {
 const renderAccountInfo = (that) => (<div className={css.account}>
   <a className={css.accountLink} onClick={that.handleToggleAccountMenu}>{that.props.account.manager.email}</a>
   { that.state.showAccountMenu && <ul className={css.accountMenu}>
-    <li><Link className={css.aMenuItem} to='/console/account'>帳號設定</Link></li>
+    <li><Link className={css.aMenuItem} to='/console'>後台首頁</Link></li>
+    <li><Link className={css.aMenuItem} to='/'>前台首頁</Link></li>
+    <li><Link className={css.aMenuItem} to='/console/manager'>帳號設定</Link></li>
     <li><a className={css.aMenuItem} href='#' onClick={that.handleLogout}>登出</a></li>
   </ul> }
 </div>)

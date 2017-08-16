@@ -8,23 +8,21 @@ import { actionCreators as eventActions } from '../../ducks/event'
 
 import css from './style.css'
 import Header from '../Header'
-import Footer from '../Footer'
 
 const render = {
   raceList: ({race, raceSelected, index, handleSelect, groupNames}) => {
     return <li className={(index === raceSelected) ? css.selected : css.li} key={'race' + race.id}>
+      <div className={css[race.raceStatus]} />
       <button className={css.list} onClick={handleSelect(index)}>
-        <span>{groupNames[race.group.toString()]}</span>
-        <span>:</span>
+        {groupNames && <span>{groupNames[race.group.toString()]} -</span>}
         <span>{(race.nameCht) ? race.nameCht : race.name}</span>
       </button>
-      <div className={css[race.raceStatus]} />
     </li>
   },
   dashboard: {
     labels: (race, regNames) => <div className={css.dashId}><table className={css.dashTable}>
       <thead><tr>
-        <th className={css.no}>名次</th>
+        <th className={css.no}>排位</th>
         <th className={css.name}>選手</th>
       </tr></thead>
       <tbody>{race && race.result && race.result.map((record, index) => {
@@ -74,6 +72,7 @@ export class PublicEvent extends StandardComponent {
     }
     const returnSelectedRace = (orderedRaces) => {
       for (var i = 0; i < orderedRaces.length; i += 1) { if (orderedRaces[i].raceStatus !== 'submitted') { return i } }
+      return orderedRaces.length - 1
     }
     const ongoingRace = (this.props.event.ongoingRace === -1) ? undefined : returnOngoingRace(this.props.event.ongoingRace, this.props.races)
     let stateObj = {
@@ -117,30 +116,34 @@ export class PublicEvent extends StandardComponent {
     return (e) => { this.setState({ raceSelected: index }) }
   }
   render () {
-    const { location, event, match, races, nameTables } = this.props
+    const { location, event, match, races, groups, nameTables } = this.props
     const { raceSelected } = this.state
+    const showHeader = (location.search.indexOf('header=0') > -1) ? false : true
     if (!match.params.uniqueName) { return <Redirect to={{pathname: '/'}} /> } else if (!event) { return <div><Header location={location} match={match} isPublic='1' /><div className={css.loading}>Loading...</div></div> }
     const race = races[raceSelected]
-
-    return (<div className={css.wrap}><Header isPublic='1' location={location} match={match} />
+    return (<div className={css.wrap}>
+      {showHeader && <Header isPublic='1' location={location} match={match} /> }
       <div className={css.mainBody}>
         <div className={css.info}>
-          <h2>{event.nameCht}</h2>
+          {showHeader && <h2>{event.nameCht}</h2>}
+          <ul className={css.raceSelector}>
+            {groups.length > 1
+              ? races.map((race, index) => render.raceList({ race, index, raceSelected, groupNames: nameTables.group, handleSelect: this.handleSelect }))
+              : races.map((race, index) => render.raceList({ race, index, raceSelected, handleSelect: this.handleSelect }))
+            }
+          </ul>
         </div>
         <div className={css.managerList}>
           <div>
-            <div className={css.hd}><span>賽程</span></div>
-            <ul className={css.ul}>
-              {races.map((race, index) => render.raceList({ race, index, raceSelected, groupNames: nameTables.group, handleSelect: this.handleSelect }))}
-            </ul>
+
           </div>
           {render.dashboard.labels(race, nameTables.reg)}
           <div className={css.scrollBox}>{render.dashboard.results(race)}</div>
           <div className={css.summary}>{render.dashboard.summary(race)}</div>
           <div className={css.advTable}>{render.dashboard.advance({race, raceNames: nameTables.race})}</div>
         </div>
+        <div className={css.footer}>Powered by Beardude Event <span>&copy;</span> <span>{new Date().getFullYear()}</span> </div>
       </div>
-      <Footer />
     </div>)
   }
 }

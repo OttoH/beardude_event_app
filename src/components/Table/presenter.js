@@ -34,7 +34,7 @@ export const renderInput = {
   checkbox: ({disabled, onChange, value}) => <input type='checkbox' onChange={onChange} checked={value} defaultValue={value} disabled={disabled} />,
   datetime: ({disabled, onChange, value}) => <input type='datetime-local' onChange={onChange} defaultValue={value} disabled={disabled} />,
   password: ({disabled, onChange, value}) => <input type='password' onChange={onChange} defaultValue={value} disabled={disabled} />,
-  text: ({disabled, onChange, value}) => <input type='text' onChange={onChange} defaultValue={value} disabled={disabled} />,
+  text: ({disabled, onChange, value}) => <input type='text' onChange={onChange} value={value} defaultValue={value} disabled={disabled} />,
   number: ({disabled, onChange, value}) => <input type='number' onChange={onChange} defaultValue={value} disabled={disabled} />,
   textarea: ({disabled, onChange, value}) => <textarea onChange={onChange} defaultValue={value} disabled={disabled} />
 }

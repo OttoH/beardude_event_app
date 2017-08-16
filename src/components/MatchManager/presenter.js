@@ -213,6 +213,7 @@ export class MatchManager extends StandardComponent {
     }
     const returnSelectedRace = (orderedRaces) => {
       for (var i = 0; i < orderedRaces.length; i += 1) { if (orderedRaces[i].raceStatus !== 'submitted') { return i } }
+      return orderedRaces.length - 1
     }
     const ongoingRace = (this.props.event.ongoingRace === -1) ? undefined : returnOngoingRace(this.props.event.ongoingRace, this.props.races)
     let stateObj = {
