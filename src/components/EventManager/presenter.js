@@ -21,7 +21,7 @@ const returnDateTime = (timestamp, forDisplay) => {
   const t = new Date(timestamp + 28800000) // taipei diff
   return t.getUTCFullYear() + '-' + ('0' + (t.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + t.getUTCDate()).slice(-2) + (forDisplay ? ' ' : 'T') + ('0' + t.getUTCHours()).slice(-2) + ':' + ('0' + t.getUTCMinutes()).slice(-2) // yyyy-mm-ddThh:mm
 }
-const validateRfid = ({input, regs, pacerEpc}) => {
+const uniqueRfid = ({input, regs, pacerEpc}) => {
   if (pacerEpc && input === pacerEpc) {
     return false
   }
@@ -32,6 +32,7 @@ const validateRfid = ({input, regs, pacerEpc}) => {
   }
   return true
 }
+const validRfidLength = (epc) => (epc.length === 24)
 const returnInputs = {
   event: (modified, original) => [
     {label: '中文名稱', field: 'nameCht', type: 'text'},
@@ -159,7 +160,7 @@ const render = {
   rfidForm: {
     event: ({original, modified, handleInputRfid, rfidMessage}) => {
       const pacerEpc = valueFunc(modified, original, 'pacerEpc')
-      return <div>{rfidMessage && <h4 className={css.forbidden}>{rfidMessage}</h4>}<ul>
+      return <div>{(rfidMessage !== -1) && <h4 className={css.forbidden}>{rfidMessage}</h4>}<ul>
         <li>
           <label>前導車ID</label>
           <input type='text' defaultValue={pacerEpc} onChange={handleInputRfid('pacerEpc')} />
@@ -168,47 +169,66 @@ const render = {
     },
     reg: ({original, modified, handleInputRfid, rfidMessage}) => {
       const epc = valueFunc(modified, original, 'epc')
-      return <div>{rfidMessage && <h4 className={css.forbidden}>{rfidMessage}</h4>}
+      return <div>{(rfidMessage !== -1) && <h4 className={css.forbidden}>{rfidMessage}</h4>}
         <label>RFID</label>
         <input type='text' defaultValue={epc} onChange={handleInputRfid('epc')} />
       </div>
     }
   }
 }
-let isRfidReader = false
 export class EventManager extends BaseComponent {
   constructor (props) {
     super(props)
+    this.isRfidReader = false
+    this.timer = 0
+    this.inputCount = 0
     this.state = {
       racesFiltered: [],
       regsFiltered: [],
       groupSelected: -1,
       raceSelected: -1,
       regSelected: -1,
-      rfidMessage: undefined,
+      rfidMessage: -1,
       editModel: undefined,
       editValue: undefined,
       modified: false
     }
     this.dispatch = this.props.dispatch
-    this._bind('handleStartEdit', 'handleKeypress', 'handleKeyup', 'handleCancelEdit', 'handleDelete', 'handleSubmit', 'handleInput', 'handleInputRfid', 'handleSelect', 'updateListArrays')
+    this._bind('handleStartEdit', 'detectRfidReader', 'handleCancelEdit', 'handleDelete', 'handleSubmit', 'handleInput', 'handleInputRfid', 'handleSelect', 'updateListArrays')
   }
   componentDidMount () {
     const onSuccess = () => {
       if (this.props.match.params.uniqueName === 'new') { this.setState({ editModel: 'event', editValue: {} }) }
     }
     if (window.navigator.userAgent.indexOf('Android') > -1) {
-      window.addEventListener('keypress', this.handleKeypress)
-      window.addEventListener('keyup', this.handleKeyup)
+      window.addEventListener('keypress', this.detectRfidReader)
     }
     this.dispatch(eventActions.getEvent(this.props.match.params.uniqueName, onSuccess))
   }
   componentWillUnmount () {
-    window.removeEventListener('keypress', this.handleKeypress)
-    window.removeEventListener('keyup', this.handleKeyup)
+    window.removeEventListener('keypress', this.detectRfidReader)
   }
-  handleKeypress () { isRfidReader = true }
-  handleKeyup () { isRfidReader = false }
+  detectRfidReader () {
+    this.inputCount += 1
+    const checker = this.inputCount
+    const diff = Date.now() - this.timer
+    this.timer = Date.now()
+    if (diff < 150) {
+      this.isRfidReader = true
+      setTimeout(function () {
+        let value
+        if ( checker === this.inputCount ) {
+          this.isRfidReader = false
+          this.inputCount = 0
+          if (this.state.editValue) {
+            if (this.state.editValue.epc) { value = this.state.editValue.epc }
+            if (this.state.editValue.pacerEpc) { value = this.state.editValue.pacerEpc }
+            this.setState({rfidMessage: validRfidLength(value) ? -1 :  `RFID標籤的長度應為24碼`})
+          }
+        }
+      }.bind(this), 500)
+    }
+  }
   handleStartEdit (model, object) {
     return (e) => {
       let editValue = {}
@@ -230,7 +250,7 @@ export class EventManager extends BaseComponent {
         editValue.group = this.props.groups[this.state.groupSelected].id
         if (object.id) { editValue.id = object.id }
       }
-      this.setState({ editModel: model, editValue: editValue })
+      this.setState({ editModel: model, editValue: editValue, rfidMessage: -1 })
     }
   }
   handleCancelEdit () {
@@ -257,7 +277,7 @@ export class EventManager extends BaseComponent {
   handleInput (field, type) {
     return (e) => {
       let editValue = {...this.state.editValue, [field]: e.target.value}
-      if (!isRfidReader) {
+      if (!this.isRfidReader) {
         if (type === 'checkbox') { editValue[field] = (e.target.value === 'true') ? false : true }
         this.setState({ editValue: editValue, modified: true })
       }
@@ -271,15 +291,15 @@ export class EventManager extends BaseComponent {
   }
   handleSubmit (model) {
     return (e) => {
-      let stateObj = { editModel: undefined, editValue: undefined, rfidMessage: undefined, modified: false }
+      let stateObj = { editModel: undefined, editValue: undefined, rfidMessage: -1, modified: false }
       let onSuccess = () => this.updateListArrays(stateObj)
       let validateResult = true
       if (model === 'event' && this.state.editValue.pacerEpc) {
-        if (!validateRfid({input: state.editValue.pacerEpc, regs: this.props.registrations})) {
+        if (!uniqueRfid({input: this.state.editValue.pacerEpc, regs: this.props.registrations})) {
           return this.setState({rfidMessage: '重複的RFID: ' + this.state.editValue.pacerEpc})
         }
       } else if (model === 'reg') {
-        if (!validateRfid({input: this.state.editValue.epc, regs: this.props.registrations, pacerEpc: this.props.event.pacerEpc})) {
+        if (!uniqueRfid({input: this.state.editValue.epc, regs: this.props.registrations, pacerEpc: this.props.event.pacerEpc})) {
           return this.setState({rfidMessage: '重複的RFID: ' + this.state.editValue.epc})
         }
       }
