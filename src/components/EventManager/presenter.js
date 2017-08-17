@@ -44,7 +44,8 @@ const returnInputs = {
     {label: '公開活動', field: 'isPublic', type: 'checkbox'},
     {label: '隊伍報名', field: 'isTeamRegistrationOpen', type: 'checkbox'},
     {label: '個人報名', field: 'isRegistrationOpen', type: 'checkbox'},
-    {label: '地下活動', field: 'isIndieEvent', type: 'checkbox', value: true}
+    {label: '地下活動', field: 'isIndieEvent', type: 'checkbox', value: true},
+    {label: '發布延遲(ms)', field: 'resultLatency', type: 'number'}
   ],
   group: () => [
     {label: '中文名稱', field: 'nameCht', type: 'text'},

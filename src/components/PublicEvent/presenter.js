@@ -89,7 +89,7 @@ export class PublicEvent extends StandardComponent {
     }
     this.socketio = io(SERVICE_URL)
     if (!this.props.event || (this.props.event.uniqueName !== this.props.match.params.uniqueName)) {
-      return this.dispatch(eventActions.getEvent(this.props.match.params.uniqueName, onSuccess))
+      return this.dispatch(eventActions.getEventPublic(this.props.match.params.uniqueName, onSuccess))
     }
     return onSuccess()
   }
@@ -106,10 +106,14 @@ export class PublicEvent extends StandardComponent {
       fetch(`/api/socket/info?sid=${this.socketio.id}`, {credentials: 'same-origin'}).then(V => { if (callback !== undefined) { callback() } })
     }.bind(this))
     this.socketio.on('raceupdate', function (data) {
-      this.dispatch(eventActions.updateRaceOnTheFly(data))
+      setTimeout(function () {
+        this.dispatch(eventActions.updateRaceOnTheFly(data))
+      }.bind(this), this.props.event.resultLatency)
     }.bind(this))
     this.socketio.on('raceresult', function (data) {
-      this.dispatch(eventActions.updateRaceResultOnTheFly(data))
+      setTimeout(function () {
+        this.dispatch(eventActions.updateRaceResultOnTheFly(data))
+      }.bind(this), this.props.event.resultLatency)
     }.bind(this))
   }
   handleSelect (index) {

@@ -115,6 +115,20 @@ const returnTrimmedResult = (result, laps) => {
   })
   return result
 }
+const returnDeferredHashTable = (hashTable, latency) => {
+  const now = Date.now()
+  let output = {...hashTable}
+  for (var i in output) {
+    output[i] = output[i].map(V => {
+      let result = []
+      if (V - latency > now) {
+        result.push(V)
+      }
+      return result
+    })
+  }
+  return output
+}
 export const actionCreators = {
   delete: (model, id, successCallback) => async (dispatch) => {
     const types = { event: DELETE_EVENT, group: DELETE_GROUP, race: DELETE_RACE, reg: DELETE_REG }
@@ -162,6 +176,43 @@ export const actionCreators = {
         dispatch({type: GET_EVENT, payload: {...res, races: races}})
         if (successCallback !== undefined) {
           successCallback()
+        }
+        return
+      }
+      throw res.message
+    } catch (e) {
+      dispatch({type: ACTION_ERR, payload: {error: e}})
+    }
+  },
+  getEventPublic: (uniqueName, successCallback) => async (dispatch) => {
+    if (uniqueName === 'new') {
+      dispatch({type: GET_EVENT, payload: { event: {} }})
+      return successCallback()
+    }
+    try {
+      const response = await fetch(`${SERVICE_URL}/api/event/info/${uniqueName}`, {credentials: 'same-origin'})
+      const res = await response.json()
+      if (response.status === 200) {
+        let races = returnRacesByOrder(res.races, res.event.raceOrder)
+        let hasDeferredData
+        races = races.map(V => {
+          let output = {...V}
+          if (output.result.length === 0) {
+            output.recordHashTable = returnDeferredHashTable(output.recordHashTable, res.event.resultLatency)
+            for (let i in V.recordHashTable) {
+              if (V.recordHashTable.length !== output.recordHashTable[i].length) { hasDeferredData = true }
+            }
+            output.result = returnRaceResult(output, res.registrations)
+          }
+          return output
+        })
+        dispatch({type: GET_EVENT, payload: {...res, races: races}})
+        successCallback()
+        if (hasDeferredData) {
+          setTimeout(function () {
+            dispatch({type: GET_EVENT, payload: {...res, races: races}})
+            successCallback()
+          }, res.event.resultLatency)
         }
         return
       }
