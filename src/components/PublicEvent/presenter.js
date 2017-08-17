@@ -137,15 +137,19 @@ export class PublicEvent extends StandardComponent {
             }
           </ul>
         </div>
-        <div className={css.managerList}>
-          <div></div>
-          {render.dashboard.labels(race, nameTables.reg)}
-          <div className={css.scrollBox}>{render.dashboard.results(race)}</div>
-          <div className={css.summary}>{render.dashboard.summary(race)}</div>
-          <div className={css.advTable}>{render.dashboard.advance({race, raceNames: nameTables.race})}</div>
-        </div>
+        {race.registrationIds.length === 0
+          ? <div className={css.noData}>尚無資料</div>
+          : <div className={css.managerList}>
+              <div></div>
+              {render.dashboard.labels(race, nameTables.reg)}
+              <div className={css.scrollBox}>{render.dashboard.results(race)}</div>
+              <div className={css.summary}>{render.dashboard.summary(race)}</div>
+              <div className={css.advTable}>{render.dashboard.advance({race, raceNames: nameTables.race})}</div>
+            </div>
+        }
         <div className={css.footer}>Powered by Beardude Event <span>&copy;</span> <span>{new Date().getFullYear()}</span> </div>
       </div>
+        }
     </div>)
   }
 }

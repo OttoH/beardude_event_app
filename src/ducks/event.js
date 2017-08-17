@@ -230,25 +230,35 @@ export const actionCreators = {
   },
   updateRaceResultOnTheFly: (racesObjRaw) => (dispatch, getState) => {
     let racesObj = {...racesObjRaw}
-
-    racesObj.races = returnRacesByOrder(racesObj.races, getState().event.event.raceOrder)
+    const regs = getState().event.registrations
+    //racesObj.races = returnRacesByOrder(racesObj.races, getState().event.event.raceOrder)
     racesObj.races = racesObj.races.map(V => {
       let output = {...V}
       if (output.result.length === 0) {
-        output.result = returnRaceResult(output, getState().event.registrations)
+        output.result = returnRaceResult(output, regs)
       }
       return output
     })
     dispatch({type: UPDATE_RACES, payload: racesObj})
   },
-  submitRaceResult: (raceObj, successCallback) => async (dispatch) => {
+  submitRaceResult: (raceObj, successCallback) => async (dispatch, getState) => {
     const result = returnTrimmedResult(raceObj.result, raceObj.laps)
     const advance = returnRegsToRaces(raceObj)
     try {
       const response = await fetch(`${SERVICE_URL}/api/race/submitResult`, returnPostHeader({ id: raceObj.id, result: result, advance: advance }))
       const res = await response.json()
       if (response.status === 200) {
-        dispatch({type: UPDATE_RACES, payload: {...res}})
+        let racesNew = {...res.races}
+        const regs = getState().event.registrations
+        //racesObj.races = returnRacesByOrder(racesObj.races, getState().event.event.raceOrder)
+        racesNew = racesNew.map(V => {
+          let output = {...V}
+          if (output.result.length === 0) {
+            output.result = returnRaceResult(output, regs)
+          }
+          return output
+        })
+        dispatch({type: UPDATE_RACES, payload: { races: racesNew }})
         return successCallback()
       }
       throw res.message
