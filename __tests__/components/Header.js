@@ -35,7 +35,7 @@ describe('/components/Header', () => {
   it('should show account menu when click account link', () => {
     const wrapper = mount(<Header {...{account: accountMock}} />)
     wrapper.find('.style__accountLink___2vCne').simulate('click')
-    expect(wrapper.find('.style__accountMenu___1K59L > li').length).toEqual(2)
+    expect(wrapper.find('.style__accountMenu___1K59L > li').length).toEqual(4)
   })
 
   it('should redirect if authenticated fail', () => {
