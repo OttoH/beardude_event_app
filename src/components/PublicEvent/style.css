@@ -74,9 +74,9 @@
 .raceSelector .selected button {
   position: relative;
   margin: 0;
-  padding: 0 5px;
+  padding: 0 8px;
   border: 0;
-  font-size: 13px;
+  font-size: 15px;
   text-indent: 0;
 }
 .init {
@@ -235,4 +235,11 @@
   color: #fff;
   font-size: 11px;
   text-align :center;
+}
+@media only screen and (max-width : 700px) {
+  .raceSelector .li button,
+  .raceSelector .selected button {
+     padding: 0 5px;
+    font-size: 13px;
+  }
 }
