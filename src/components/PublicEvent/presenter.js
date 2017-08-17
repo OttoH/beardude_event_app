@@ -138,7 +138,7 @@ export class PublicEvent extends StandardComponent {
           </ul>
         </div>
         {race.registrationIds.length === 0
-          ? <div className={css.noData}>尚無資料</div>
+          ? <div className={css.noData}>比賽尚未開始</div>
           : <div className={css.managerList}>
               <div></div>
               {render.dashboard.labels(race, nameTables.reg)}
