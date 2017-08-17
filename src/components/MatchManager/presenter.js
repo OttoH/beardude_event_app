@@ -195,13 +195,14 @@ export class MatchManager extends StandardComponent {
     this.modified = false
     this.state = {
       raceSelected: 0,
-      readerStatus: undefined, // didmount的時候打一次api先init狀態
+      readerStatus: 'idle', // didmount的時候打一次api先init狀態
       ongoingRace: undefined,
       dialog: undefined,
       countdown: 60,
       counter: undefined,
       editField: undefined,
-      editValue: undefined
+      editValue: undefined,
+      counting: false
     }
     this.dispatch = this.props.dispatch
     this._bind('socketIoEvents', 'countdown', 'handleChangeCountdown', 'handleControlReader', 'handleDragStart', 'handleDragOver', 'handleDragEnd', 'handleEditAdvnace', 'handleEndRace', 'handleResize', 'handleSelect', 'handleStartRace', 'handleSubmitRaceOrder', 'handleSubmitResult', 'handleToggleEdit', 'handleUpdateDialog', 'handleResetRace', 'updateRecords', 'updateOngoingRaces')
@@ -225,16 +226,17 @@ export class MatchManager extends StandardComponent {
       clearInterval(this.timer)
     } else if (this.props.races[stateObj.ongoingRace].startTime && this.props.races[stateObj.ongoingRace].startTime > Date.now()) {
       stateObj.dialog = 'countdown'
-      this.timer = setInterval(this.countdown, 100)
+      if (!this.state.counting) { this.timer = setInterval(this.countdown, 100) }
+      stateObj.counting = true
     }
     this.setState(stateObj)
   }
   componentDidMount () {
     const onSuccess = () => {
-      this.socketIoEvents(this.handleControlReader('getreaderstatus'))
       this.updateOngoingRaces()
     }
     this.socketio = io(SERVICE_URL)
+    this.socketIoEvents()
     if (!this.props.event || (this.props.event.uniqueName !== this.props.match.params.uniqueName)) {
       return this.dispatch(eventActions.getEvent(this.props.match.params.uniqueName, onSuccess))
     }
@@ -260,11 +262,14 @@ export class MatchManager extends StandardComponent {
     const result = parseFloat(Math.floor(timeLeft / 100) / 10).toFixed(1)
     this.setState({ counter: result })
   }
-  socketIoEvents (callback) {
+  socketIoEvents () {
     this.socketio.on('connect', function () {
-      fetch(`/api/socket/mgmt?sid=${this.socketio.id}`, {credentials: 'same-origin'}).then(V => { if (callback !== undefined) { callback() } })
+      fetch(`/api/socket/mgmt?sid=${this.socketio.id}`, {credentials: 'same-origin'}).then(V => {
+        this.handleControlReader('getreaderstatus')
+      })
     }.bind(this))
     this.socketio.on('readerstatus', function (data) {
+      console.log('reader status: ', data.result.isSingulating)
       this.setState({ readerStatus: (data.result && data.result.isSingulating) ? 'started' : 'idle' })
     }.bind(this))
     this.socketio.on('raceupdate', function (data) {
@@ -356,8 +361,9 @@ export class MatchManager extends StandardComponent {
   handleResetRace () {
     const onSuccess = () => {
       this.handleControlReader('terminatereader')
-      this.setState({ ongoingRace: undefined }, function () { this.updateOngoingRaces() }.bind(this))
+      this.setState({ ongoingRace: undefined, dialog: undefined }, function () { this.updateOngoingRaces() }.bind(this))
     }
+    console.log('handle reset race')
     this.dispatch(eventActions.controlRace('reset', {id: this.props.races[this.state.raceSelected].id}, onSuccess))
   }
   handleEndRace () {
