@@ -105,6 +105,9 @@ export class PublicEvent extends StandardComponent {
     this.socketio.on('connect', function () {
       fetch(`/api/socket/info?sid=${this.socketio.id}`, {credentials: 'same-origin'}).then(V => { if (callback !== undefined) { callback() } })
     }.bind(this))
+    this.socketio.on('eventlatencyupdate', function (data) {
+      this.dispatch(eventActions.updateEventLatency(data))
+    }.bind(this))
     this.socketio.on('raceupdate', function (data) {
       setTimeout(function () {
         this.dispatch(eventActions.updateRaceOnTheFly(data))

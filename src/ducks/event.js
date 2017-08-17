@@ -17,6 +17,7 @@ const SUBMIT_GROUP = 'event/SUBMIT_GROUP'
 const SUBMIT_RACE = 'event/SUBMIT_RACE'
 const SUBMIT_REG = 'event/SUBMIT_REG'
 
+const UPDATE_EVENT_LATENCY = 'event/UPDATE_EVENT_LATENCY'
 const UPDATE_GROUP = 'event/UPDATE_GROUP'
 const UPDATE_RACE = 'event/UPDATE_RACE'
 const UPDATE_RACES = 'event/UPDATE_RACES'
@@ -272,6 +273,9 @@ export const actionCreators = {
       dispatch({type: ACTION_ERR, payload: {error: e}})
     }
   },
+  updateEventLatency: (obj) => async (dispatch) => {
+    dispatch({type: UPDATE_EVENT_LATENCY, payload: obj})
+  },
   updateRaceOnTheFly: (raceObjRaw) => (dispatch, getState) => {
     let raceObj = {...raceObjRaw}
     if (raceObj.race.result.length === 0) {
@@ -420,6 +424,9 @@ export const reducer = (state = initialState, action) => {
     }
     case SUBMIT_REG: {
       return {...state, registrations: [...state.registrations, payload.registration]}
+    }
+    case UPDATE_EVENT_LATENCY: {
+      return {...state, event: {...state.event, resultLatency: payload.event.resultLatency}}
     }
     case UPDATE_GROUP: {
       let nextState = {...state}
