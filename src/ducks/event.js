@@ -288,9 +288,10 @@ export const actionCreators = {
       let res = await response.json()
       if (response.status === 200) {
         let races = returnRacesByOrder(res.races, getState().event.event.raceOrder)
+        const regs = getState().event.registrations
         races = races.map(V => {
           var output = {...V}
-          if (output.result.length === 0) { output.result = returnRaceResult(V, res.registrations) }
+          if (output.result.length === 0) { output.result = returnRaceResult(V, regs) }
           return output
         })
         dispatch({type: UPDATE_RACES, payload: { races: races }})
