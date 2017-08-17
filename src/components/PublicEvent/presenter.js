@@ -149,7 +149,6 @@ export class PublicEvent extends StandardComponent {
         }
         <div className={css.footer}>Powered by Beardude Event <span>&copy;</span> <span>{new Date().getFullYear()}</span> </div>
       </div>
-        }
     </div>)
   }
 }
