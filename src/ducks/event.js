@@ -231,7 +231,7 @@ export const actionCreators = {
   updateRaceResultOnTheFly: (racesObjRaw) => (dispatch, getState) => {
     let racesObj = {...racesObjRaw}
     const regs = getState().event.registrations
-    //racesObj.races = returnRacesByOrder(racesObj.races, getState().event.event.raceOrder)
+    // racesObj.races = returnRacesByOrder(racesObj.races, getState().event.event.raceOrder)
     racesObj.races = racesObj.races.map(V => {
       let output = {...V}
       if (output.result.length === 0) {
@@ -250,7 +250,7 @@ export const actionCreators = {
       if (response.status === 200) {
         let racesNew = {...res.races}
         const regs = getState().event.registrations
-        //racesObj.races = returnRacesByOrder(racesObj.races, getState().event.event.raceOrder)
+        // racesObj.races = returnRacesByOrder(racesObj.races, getState().event.event.raceOrder)
         racesNew = racesNew.map(V => {
           let output = {...V}
           if (output.result.length === 0) {
