@@ -213,7 +213,12 @@ export class MatchManager extends StandardComponent {
       return undefined
     }
     const returnSelectedRace = (orderedRaces) => {
-      for (var i = 0; i < orderedRaces.length; i += 1) { if (orderedRaces[i].raceStatus !== 'submitted') { return i } }
+      const selectedRaceStatusByOrder = ['started', 'ended', 'init']
+      for (var i = 0; i < selectedRaceStatusByOrder.length; i += 1) {
+        for (var j = 0; j < orderedRaces.length; j += 1) {
+          if (orderedRaces[j].raceStatus === selectedRaceStatusByOrder[i]) { return j }
+        }
+      }
       return orderedRaces.length - 1
     }
     const ongoingRace = (this.props.event.ongoingRace === -1) ? undefined : returnOngoingRace(this.props.event.ongoingRace, this.props.races)
@@ -269,7 +274,6 @@ export class MatchManager extends StandardComponent {
       })
     }.bind(this))
     this.socketio.on('readerstatus', function (data) {
-      console.log('reader status: ', data.result.isSingulating)
       this.setState({ readerStatus: (data.result && data.result.isSingulating) ? 'started' : 'idle' })
     }.bind(this))
     this.socketio.on('raceupdate', function (data) {
@@ -363,7 +367,6 @@ export class MatchManager extends StandardComponent {
       this.handleControlReader('terminatereader')
       this.setState({ ongoingRace: undefined, dialog: undefined }, function () { this.updateOngoingRaces() }.bind(this))
     }
-    console.log('handle reset race')
     this.dispatch(eventActions.controlRace('reset', {id: this.props.races[this.state.raceSelected].id}, onSuccess))
   }
   handleEndRace () {
