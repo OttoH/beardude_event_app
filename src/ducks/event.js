@@ -118,15 +118,29 @@ const returnTrimmedResult = (result, laps) => {
 }
 const returnDeferredHashTable = (hashTable, latency) => {
   const now = Date.now()
-  let output = {...hashTable}
-  for (var i in output) {
-    output[i] = output[i].map(V => {
-      let result = []
-      if (V - latency > now) {
-        result.push(V)
-      }
-      return result
-    })
+  let output = {}
+  for (var i in hashTable) {
+    let result = []
+    hashTable[i].map(V => { if ((V + latency) <= now) { result.push(V) } })
+    output[i] = result
+  }
+  return output
+}
+const returnDeferredTimeArray = (orgHashTable, trimmedHashTable, latency) => {
+  const now = Date.now()
+  let deferredTimes = []
+  for (let i in orgHashTable) {
+    let updateCount = orgHashTable[i].length - trimmedHashTable[i].length
+    for (let j = 0; j < updateCount; j += 1) {
+      deferredTimes.push((latency + now) - orgHashTable[i][orgHashTable[i].length - 1 - j])
+    }
+  }
+  return deferredTimes
+}
+const returnDeferredRaceStatus = (raceStatus, latency, endTime) => {
+  let output = raceStatus
+  if (output === 'ended' || output === 'submitted') {
+    if (endTime + latency > Date.now()) { output = 'started' }
   }
   return output
 }
@@ -185,7 +199,7 @@ export const actionCreators = {
       dispatch({type: ACTION_ERR, payload: {error: e}})
     }
   },
-  getEventPublic: (uniqueName, successCallback) => async (dispatch) => {
+  getEventPublic: (uniqueName, successCallback) => async (dispatch, getState) => {
     if (uniqueName === 'new') {
       dispatch({type: GET_EVENT, payload: { event: {} }})
       return successCallback()
@@ -193,28 +207,39 @@ export const actionCreators = {
     try {
       const response = await fetch(`${SERVICE_URL}/api/event/info/${uniqueName}`, {credentials: 'same-origin'})
       const res = await response.json()
+      const updateRacesLater = (deferredTimes, races, latency, regs) => {
+        const allowance = 3000
+        if (deferredTimes.length > 0) {
+          deferredTimes.map(time => {
+            setTimeout(function () {
+              let newRaces = races.map(race => {
+                let output = {...race, recordsHashTable: returnDeferredHashTable(race.recordsHashTable, time)}
+                if (output.result.length === 0) { output.result = returnRaceResult(output, regs) }
+                output.raceStatus = returnDeferredRaceStatus(output.raceStatus, latency, output.endTime)
+                return output
+              })
+              dispatch({type: UPDATE_RACES, payload: {races: newRaces}})
+              successCallback()
+            }, time + allowance)
+          })
+        }
+      }
       if (response.status === 200) {
-        let races = returnRacesByOrder(res.races, res.event.raceOrder)
-        let hasDeferredData
-        races = races.map(V => {
+        let orderedRaces = returnRacesByOrder(res.races, res.event.raceOrder)
+        let deferredTimes = []
+        let races = orderedRaces.map((V, I) => {
           let output = {...V}
-          if (output.result.length === 0) {
-            output.recordHashTable = returnDeferredHashTable(output.recordHashTable, res.event.resultLatency)
-            for (let i in V.recordHashTable) {
-              if (V.recordHashTable.length !== output.recordHashTable[i].length) { hasDeferredData = true }
-            }
-            output.result = returnRaceResult(output, res.registrations)
-          }
+          let defer = []
+          output.recordsHashTable = returnDeferredHashTable(output.recordsHashTable, res.event.resultLatency)
+          output.raceStatus = returnDeferredRaceStatus(output.raceStatus, res.event.resultLatency, output.endTime)
+          if (output.result.length === 0) { output.result = returnRaceResult(output, res.registrations) }
+          defer = returnDeferredTimeArray(V.recordsHashTable, output.recordsHashTable, res.event.resultLatency)
+          deferredTimes = deferredTimes.concat(defer)
           return output
         })
         dispatch({type: GET_EVENT, payload: {...res, races: races}})
         successCallback()
-        if (hasDeferredData) {
-          setTimeout(function () {
-            dispatch({type: GET_EVENT, payload: {...res, races: races}})
-            successCallback()
-          }, res.event.resultLatency)
-        }
+        updateRacesLater(deferredTimes, orderedRaces, res.event.resultLatency, res.registrations)
         return
       }
       throw res.message

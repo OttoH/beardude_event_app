@@ -71,7 +71,12 @@ export class PublicEvent extends StandardComponent {
       return undefined
     }
     const returnSelectedRace = (orderedRaces) => {
-      for (var i = 0; i < orderedRaces.length; i += 1) { if (orderedRaces[i].raceStatus !== 'submitted') { return i } }
+      const selectedRaceStatusByOrder = ['started', 'ended', 'init']
+      for (var i = 0; i < selectedRaceStatusByOrder.length; i += 1) {
+        for (var j = 0; j < orderedRaces.length; j += 1) {
+          if (orderedRaces[j].raceStatus === selectedRaceStatusByOrder[i]) { return j }
+        }
+      }
       return orderedRaces.length - 1
     }
     const ongoingRace = (this.props.event.ongoingRace === -1) ? undefined : returnOngoingRace(this.props.event.ongoingRace, this.props.races)
