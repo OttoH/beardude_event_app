@@ -4,33 +4,14 @@ import io from 'socket.io-client'
 import { StandardComponent } from '../BaseComponent'
 import { Redirect } from 'react-router-dom'
 import { actionCreators as eventActions } from '../../ducks/event'
+import processData from '../../ducks/processData'
 import css from './style.css'
 import { Dialogue } from '../Dialogue/presenter'
 import Button from '../Button'
 import Header from '../Header'
 
-const canStopRace = (result, laps) => {
-  let canStop = true
-  result.map(V => { if (V.laps < laps) { canStop = false } })
-  return canStop
-}
-const returnMovedArray = (arr, oldIndex, newIndex) => {
-  while (oldIndex < 0) { oldIndex += arr.length }
-  while (newIndex < 0) { newIndex += arr.length }
-  if (newIndex >= arr.length) {
-    let k = newIndex - arr.length
-    while ((k--) + 1) { arr.push(undefined) }
-  }
-  arr.splice(newIndex, 0, arr.splice(oldIndex, 1)[0])
-  return arr
-}
-const canStartRace = (ongoingRace, race) => {
-  if (ongoingRace === undefined && race.registrationIds.length > 0) { return true }
-  return false
-}
 const render = {
   advanceMenu: ({advancingRules, raceNames, value, handleEditAdvnace, index}) => <select defaultValue={value} onChange={handleEditAdvnace(index)}><option value='-1'>無</option>{advancingRules.map(rule => <option key={'rule' + rule.toRace} value={rule.toRace}>{raceNames[rule.toRace]}</option>)}</select>,
-
   raceList: ({race, raceSelected, index, handleSelect, groupNames}) => {
     return <li className={(index === raceSelected) ? css.selected : css.li} key={'race' + race.id}>
       <button className={css.list} onClick={handleSelect(index)}>
@@ -54,11 +35,11 @@ const render = {
   raceCtrl: ({race, readerStatus, editField, ongoingRace, handleEndRace, handleUpdateDialog, handleToggleEdit, modified}) => {
     switch (race.raceStatus) {
       case 'init': {
-        return <span className={css.raceCtrl}>{(canStartRace(ongoingRace, race)) ? <Button style='short' text='開賽倒數' onClick={handleUpdateDialog('startCountdown')} /> : <Button text='開賽倒數' style='shortDisabled' />}<Button style='shortRed' text='重設比賽' onClick={handleUpdateDialog('cancelRace')} /></span>
+        return <span className={css.raceCtrl}>{(processData.canStartRace(ongoingRace, race)) ? <Button style='short' text='開賽倒數' onClick={handleUpdateDialog('startCountdown')} /> : <Button text='開賽倒數' style='shortDisabled' />}<Button style='shortRed' text='重設比賽' onClick={handleUpdateDialog('cancelRace')} /></span>
       }
       case 'started': {
         return <span className={css.raceCtrl}>
-          {(canStopRace(race.result, race.laps))
+          {(processData.canStopRace(race.result, race.laps))
             ? <Button style='short' text='結束比賽' onClick={handleEndRace} />
             : <Button style='shortRed' text='結束比賽' onClick={handleUpdateDialog('endRace')} />
           }
@@ -207,26 +188,12 @@ export class MatchManager extends StandardComponent {
     this.dispatch = this.props.dispatch
     this._bind('socketIoEvents', 'countdown', 'handleChangeCountdown', 'handleControlReader', 'handleDragStart', 'handleDragOver', 'handleDragEnd', 'handleEditAdvnace', 'handleEndRace', 'handleResize', 'handleSelect', 'handleStartRace', 'handleSubmitRaceOrder', 'handleSubmitResult', 'handleToggleEdit', 'handleUpdateDialog', 'handleResetRace', 'updateRecords', 'updateOngoingRaces')
   }
-  updateOngoingRaces () {
-    const returnOngoingRace = (ongoingRaceId, orderedRaces) => {
-      for (let i = 0; i < orderedRaces.length; i += 1) { if (orderedRaces[i].id === ongoingRaceId) { return i } }
-      return undefined
-    }
-    const returnSelectedRace = (orderedRaces) => {
-      const selectedRaceStatusByOrder = ['started', 'ended', 'init']
-      for (var i = 0; i < selectedRaceStatusByOrder.length; i += 1) {
-        for (var j = 0; j < orderedRaces.length; j += 1) {
-          if (orderedRaces[j].raceStatus === selectedRaceStatusByOrder[i]) { return j }
-        }
-      }
-      return orderedRaces.length - 1
-    }
-    const ongoingRace = (this.props.event.ongoingRace === -1) ? undefined : returnOngoingRace(this.props.event.ongoingRace, this.props.races)
+  updateOngoingRaces (toSelectRace) {
     let stateObj = {
-      ongoingRace: ongoingRace,
-      raceSelected: (ongoingRace) ? ongoingRace : returnSelectedRace(this.props.races),
+      ongoingRace: (this.props.event.ongoingRace === -1) ? undefined : processData.returnOngoingRace(this.props.event.ongoingRace, this.props.races),
       dialog: undefined
     }
+    if (toSelectRace) { stateObj.raceSelected = processData.returnSelectedRace(this.props.races, stateObj.ongoingRace) }
     if (stateObj.ongoingRace === undefined) {
       clearInterval(this.timer)
     } else if (this.props.races[stateObj.ongoingRace].startTime && this.props.races[stateObj.ongoingRace].startTime > Date.now()) {
@@ -237,9 +204,7 @@ export class MatchManager extends StandardComponent {
     this.setState(stateObj)
   }
   componentDidMount () {
-    const onSuccess = () => {
-      this.updateOngoingRaces()
-    }
+    const onSuccess = () => { this.updateOngoingRaces(true) }
     this.socketio = io(SERVICE_URL)
     this.socketIoEvents()
     if (!this.props.event || (this.props.event.uniqueName !== this.props.match.params.uniqueName)) {
@@ -251,9 +216,7 @@ export class MatchManager extends StandardComponent {
     this.socketio.close()
   }
   componentWillReceiveProps () {
-    if (this.props.event) {
-      this.updateOngoingRaces()
-    }
+    if (this.props.event) { this.updateOngoingRaces() }
   }
   countdown () {
     const reset = () => {
@@ -309,10 +272,10 @@ export class MatchManager extends StandardComponent {
       let editValue
       if (this.state.editField === 'raceOrder') {
         editValue = (this.state.editValue) ? this.state.editValue : this.props.event.raceOrder
-        this.setState({ editValue: returnMovedArray(editValue, this.dragFromIndex, this.dragOverIndex), raceSelected: this.dragOverIndex })
+        this.setState({ editValue: processData.returnMovedArray(editValue, this.dragFromIndex, this.dragOverIndex), raceSelected: this.dragOverIndex })
       } else if (this.state.editField === 'raceResult') {
         let race = this.props.races[this.state.raceSelected]
-        race.result = returnMovedArray([...race.result], this.dragFromIndex, this.dragOverIndex)
+        race.result = processData.returnMovedArray([...race.result], this.dragFromIndex, this.dragOverIndex)
         this.setState({ editValue: race })
       }
     }

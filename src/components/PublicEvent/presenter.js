@@ -5,6 +5,7 @@ import BaseComponent from '../BaseComponent'
 import { StandardComponent } from '../BaseComponent'
 import { Redirect } from 'react-router-dom'
 import { actionCreators as eventActions } from '../../ducks/event'
+import processData from '../../ducks/processData'
 
 import css from './style.css'
 import Header from '../Header'
@@ -65,32 +66,18 @@ export class PublicEvent extends StandardComponent {
     this.dispatch = this.props.dispatch
     this._bind('socketIoEvents', 'handleSelect', 'updateRecords', 'updateOngoingRaces')
   }
-  updateOngoingRaces () {
-    const returnOngoingRace = (ongoingRaceId, orderedRaces) => {
-      for (let i = 0; i < orderedRaces.length; i += 1) { if (orderedRaces[i].id === ongoingRaceId) { return i } }
-      return undefined
-    }
-    const returnSelectedRace = (orderedRaces) => {
-      const selectedRaceStatusByOrder = ['started', 'ended', 'init']
-      for (var i = 0; i < selectedRaceStatusByOrder.length; i += 1) {
-        for (var j = 0; j < orderedRaces.length; j += 1) {
-          if (orderedRaces[j].raceStatus === selectedRaceStatusByOrder[i]) { return j }
-        }
-      }
-      return orderedRaces.length - 1
-    }
-    const ongoingRace = (this.props.event.ongoingRace === -1) ? undefined : returnOngoingRace(this.props.event.ongoingRace, this.props.races)
+  updateOngoingRaces (toSelectRace) {
     let stateObj = {
-      ongoingRace: ongoingRace,
-      raceSelected: (ongoingRace) ? ongoingRace : returnSelectedRace(this.props.races)
+      ongoingRace: (this.props.event.ongoingRace === -1) ? undefined : processData.returnOngoingRace(this.props.event.ongoingRace, this.props.races)
     }
+    if (toSelectRace) { stateObj.raceSelected = processData.returnSelectedRace(this.props.races, stateObj.ongoingRace) }
     if (stateObj.ongoingRace === undefined) { clearInterval(this.timer) }
     this.setState(stateObj)
   }
   componentDidMount () {
     const onSuccess = () => {
       this.socketIoEvents()
-      this.updateOngoingRaces()
+      this.updateOngoingRaces(true)
     }
     this.socketio = io(SERVICE_URL)
     if (!this.props.event || (this.props.event.uniqueName !== this.props.match.params.uniqueName)) {
@@ -99,9 +86,7 @@ export class PublicEvent extends StandardComponent {
     return onSuccess()
   }
   componentWillReceiveProps () {
-    if (this.props.event) {
-      this.updateOngoingRaces()
-    }
+    if (this.props.event) { this.updateOngoingRaces() }
   }
   componentWillUnmount () {
     this.socketio.close()
