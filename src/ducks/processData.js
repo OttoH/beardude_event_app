@@ -65,6 +65,7 @@ const processData = {
     return undefined
   },
   returnRaceResult: (race, regs) => {
+    if (race.result.length > 0) { return race.result }
     let sortTable = []
     let incomplete = []
     let notStarted = []

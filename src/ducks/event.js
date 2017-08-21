@@ -63,14 +63,7 @@ export const actionCreators = {
       const response = await fetch(`${SERVICE_URL}/api/event/info/${uniqueName}`, {credentials: 'same-origin'})
       const res = await response.json()
       if (response.status === 200) {
-        const races = res.races.map(V => {
-          let output = {...V}
-          if (output.result.length === 0) {
-            output.result = processData.returnRaceResult(output, res.registrations)
-          }
-          return output
-        })
-        dispatch({type: GET_EVENT, payload: {...res, races: races}})
+        dispatch({type: GET_EVENT, payload: {...res}})
         if (successCallback !== undefined) {
           successCallback()
         }
@@ -96,7 +89,6 @@ export const actionCreators = {
             setTimeout(function () {
               let newRaces = races.map(race => {
                 let output = {...race, recordsHashTable: processData.returnDeferredHashTable(race.recordsHashTable, time)}
-                if (output.result.length === 0) { output.result = processData.returnRaceResult(output, regs) }
                 output.raceStatus = processData.returnDeferredRaceStatus(output.raceStatus, latency, output.endTime)
                 return output
               })
@@ -113,7 +105,6 @@ export const actionCreators = {
           let defer = []
           output.recordsHashTable = processData.returnDeferredHashTable(output.recordsHashTable, res.event.resultLatency)
           output.raceStatus = processData.returnDeferredRaceStatus(output.raceStatus, res.event.resultLatency, output.endTime)
-          if (output.result.length === 0) { output.result = processData.returnRaceResult(output, res.registrations) }
           defer = processData.returnDeferredTimeArray(V.recordsHashTable, output.recordsHashTable, res.event.resultLatency)
           deferredTimes = deferredTimes.concat(defer)
           return output
@@ -134,10 +125,7 @@ export const actionCreators = {
       let response = await fetch(`${SERVICE_URL}/api/race/${action}`, returnPostHeader(object))
       let res = await response.json()
       if (response.status === 200) {
-        if (res.race.result.length === 0) {
-          res.race.result = processData.returnRaceResult(res.race, getState().event.registrations)
-        }
-        dispatch({type: CONTROL_RACE, payload: {...res, action: action}})
+        dispatch({type: CONTROL_RACE, payload: {...res, action: action, registrations: getState().event.registrations}})
         return successCallback()
       }
       throw res.message
@@ -151,10 +139,7 @@ export const actionCreators = {
       const response = await fetch(`${SERVICE_URL}/api/${model}/create`, returnPostHeader(object))
       let res = await response.json()
       if (response.status === 200) {
-        if (model === 'race' && res.race.result.length === 0) {
-          res.race.result = processData.returnRaceResult(res.race, getState().event.registrations)
-        }
-        dispatch({type: types[model], payload: {...res}})
+        dispatch({type: types[model], payload: {...res, registrations: getState().event.registrations}})
         return successCallback()
       }
       throw res.message
@@ -168,10 +153,7 @@ export const actionCreators = {
       const response = await fetch(`${SERVICE_URL}/api/${model}/update`, returnPostHeader(object))
       let res = await response.json()
       if (response.status === 200) {
-        if (model === 'race' && res.race.result.length === 0) {
-          res.race.result = processData.returnRaceResult(res.race, getState().event.registrations)
-        }
-        dispatch({type: types[model], payload: {...res}})
+        dispatch({type: types[model], payload: {...res, registrations: getState().event.registrations}})
         return successCallback()
       }
       throw res.message
@@ -182,24 +164,11 @@ export const actionCreators = {
   updateEventLatency: (obj) => async (dispatch) => {
     dispatch({type: UPDATE_EVENT_LATENCY, payload: obj})
   },
-  updateRaceOnTheFly: (raceObjRaw) => (dispatch, getState) => {
-    let raceObj = {...raceObjRaw}
-    if (raceObj.race.result.length === 0) {
-      raceObj.race.result = processData.returnRaceResult(raceObj.race, getState().event.registrations)
-    }
+  updateRaceOnTheFly: (raceObj) => (dispatch, getState) => {
     dispatch({type: UPDATE_RACE, payload: raceObj})
   },
-  updateRaceResultOnTheFly: (racesObjRaw) => (dispatch, getState) => {
-    let racesObj = {...racesObjRaw}
-    const regs = getState().event.registrations
-    racesObj.races = racesObj.races.map(V => {
-      let output = {...V}
-      if (output.result.length === 0) {
-        output.result = processData.returnRaceResult(output, regs)
-      }
-      return output
-    })
-    dispatch({type: UPDATE_RACES, payload: racesObj})
+  updateRaceResultOnTheFly: (racesObj) => (dispatch, getState) => {
+    dispatch({type: UPDATE_RACES, payload: {...racesObj, registrations: getState().event.registrations}})
   },
   submitRaceResult: (raceObj, successCallback) => async (dispatch, getState) => {
     const result = processData.returnTrimmedResult(raceObj.result, raceObj.laps)
@@ -208,16 +177,7 @@ export const actionCreators = {
       const response = await fetch(`${SERVICE_URL}/api/race/submitResult`, returnPostHeader({ id: raceObj.id, result: result, advance: advance }))
       const res = await response.json()
       if (response.status === 200) {
-        let racesNew = {...res.races}
-        const regs = getState().event.registrations
-        racesNew = racesNew.map(V => {
-          let output = {...V}
-          if (output.result.length === 0) {
-            output.result = processData.returnRaceResult(output, regs)
-          }
-          return output
-        })
-        dispatch({type: UPDATE_RACES, payload: { races: racesNew }})
+        dispatch({type: UPDATE_RACES, payload: {...res, registrations: getState().event.registrations}})
         return successCallback()
       }
       throw res.message
@@ -230,10 +190,7 @@ export const actionCreators = {
       const response = await fetch(`${SERVICE_URL}/api/race/update`, returnPostHeader({id: state.raceId, advancingRules: state.modified}))
       let res = await response.json()
       if (response.status === 200) {
-        if (res.race.result.length === 0) {
-          res.race.result = processData.returnRaceResult(res.race, getState().event.registrations)
-        }
-        dispatch({type: UPDATE_RACE, payload: {...res}})
+        dispatch({type: UPDATE_RACE, payload: {...res, registrations: getState().event.registrations}})
         return successCallback()
       }
       throw res.message
@@ -246,13 +203,7 @@ export const actionCreators = {
       const response = await fetch(`${SERVICE_URL}/api/race/assignRegsToRaces`, returnPostHeader({races: obj}))
       let res = await response.json()
       if (response.status === 200) {
-        const regs = getState().event.registrations
-        const races = res.races.map(V => {
-          var output = {...V}
-          if (output.result.length === 0) { output.result = processData.returnRaceResult(V, regs) }
-          return output
-        })
-        dispatch({type: UPDATE_RACES, payload: { races: races }})
+        dispatch({type: UPDATE_RACES, payload: {...res, registrations: getState().event.registrations}})
         return successCallback()
       }
       throw res.message
@@ -307,12 +258,18 @@ export const reducer = (state = initialState, action) => {
       return {...state, events: payload.events}
     }
     case GET_EVENT: {
-      if (payload.event.id) { return {...state, event: payload.event, groups: payload.groups, races: payload.races, registrations: payload.registrations, nameTables: { group: processData.returnIdNameMap(payload.groups), race: processData.returnIdNameMap(payload.races), reg: processData.returnRegMap(payload.registrations) }} }
+      if (payload.event.id) {
+        const races = payload.races.map(V => ({...V, result: processData.returnRaceResult(V, payload.registrations)}))
+        return {...state, event: payload.event, groups: payload.groups, races: races, registrations: payload.registrations, nameTables: { group: processData.returnIdNameMap(payload.groups), race: processData.returnIdNameMap(payload.races), reg: processData.returnRegMap(payload.registrations) }}
+      }
       return {...state, event: payload.event}
     }
     case CONTROL_RACE: {
       let nextState = {...state}
-      nextState.races = nextState.races.map(V => (V.id === payload.race.id) ? payload.race : V)
+      nextState.races = nextState.races.map(V => {
+        if (V.id !== payload.race.id) { return V }
+        return {...payload.race, result: processData.returnRaceResult(payload.race, payload.registrations)}
+      })
       nextState.event.ongoingRace = (payload.action === 'start') ? payload.race.id : -1
       return nextState
     }
@@ -323,7 +280,8 @@ export const reducer = (state = initialState, action) => {
       return {...state, groups: [...state.groups, payload.group]}
     }
     case SUBMIT_RACE: {
-      return {...state, races: [...state.races, payload.race]}
+      let race = {...payload.race, result: processData.returnRaceResult(payload.race, payload.registrations)}
+      return {...state, races: [...state.races, race]}
     }
     case SUBMIT_REG: {
       return {...state, registrations: [...state.registrations, payload.registration]}
@@ -338,15 +296,19 @@ export const reducer = (state = initialState, action) => {
     }
     case UPDATE_RACE: {
       let nextState = {...state}
-      nextState.races = nextState.races.map(V => (V.id === payload.race.id) ? payload.race : V)
+      nextState.races = nextState.races.map(V => {
+        if (V.id !== payload.race.id) { return V }
+        return {...payload.race, result: processData.returnRaceResult(payload.race, payload.registrations)}
+      })
       return nextState
     }
     case UPDATE_RACES: {
       let nextState = {...state}
       nextState.races = nextState.races.map(race => {
-        let result = race
-        payload.races.map(V => { if (V.id === race.id) { result = V } })
-        return result
+        let output = race
+        payload.races.map(V => { if (V.id === race.id) { output = V } })
+        output.result = processData.returnRaceResult(output, payload.registrations)
+        return output
       })
       return nextState
     }
