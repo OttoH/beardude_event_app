@@ -263,9 +263,7 @@ export const reducer = (state = initialState, action) => {
         })
         if (!exists) { nextState.races.push(race) }
       })
-      if (payload.action !== undefined) {
-        nextState.event.ongoingRace = (payload.action === 'start') ? payload.race.id : -1
-      }
+      if (payload.action !== undefined) { nextState.event.ongoingRace = (payload.action === 'start') ? payload.race.id : -1 }
       nextState.nameTables.race = processData.returnIdNameMap(payload.races)
       return nextState
     }
@@ -280,7 +278,7 @@ export const reducer = (state = initialState, action) => {
         return V
       })
       if (!exists) { nextState.registrations.push(payload.registration) }
-      nextState.nameTables.race = processData.returnIdNameMap(payload.races)
+      nextState.nameTables.reg = processData.returnIdNameMap(payload.races)
       return nextState
     }
   }
