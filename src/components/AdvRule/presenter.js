@@ -72,7 +72,7 @@ class AdvRule extends StandardComponent {
         this.races = this.props.races.filter(V => (V.group === this.groupId))
         this.setState({raceId: undefined, modified: undefined})
       }
-      this.dispatch(eventActions.update('race', {id: this.state.raceId, advancingRules: this.state.modified}, successCallback))
+      this.dispatch(eventActions.submit('race', {id: this.state.raceId, advancingRules: this.state.modified}, successCallback))
     }
   }
   handleToggle (raceObj, index) {

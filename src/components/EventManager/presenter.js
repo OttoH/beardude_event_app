@@ -323,7 +323,7 @@ export class EventManager extends BaseComponent {
       } else {
         stateObj.editModel = this.state.editModel
         stateObj.editValue = { id: this.state.editValue.id }
-        this.dispatch(eventActions.update(model, this.state.editValue, onSuccess))
+        this.dispatch(eventActions.submit(model, this.state.editValue, onSuccess))
       }
     }
   }
