@@ -128,22 +128,9 @@ export const actionCreators = {
   },
   submit: (model, object, successCallback) => async (dispatch, getState) => {
     const types = { event: UPDATE_EVENT, group: UPDATE_GROUP, race: UPDATE_RACES, reg: UPDATE_REG }
+    const action = (object.id) ? 'update' : 'create'
     try {
-      const response = await fetch(`${SERVICE_URL}/api/${model}/create`, returnPostHeader(object))
-      let res = await response.json()
-      if (response.status === 200) {
-        dispatch({type: types[model], payload: {...res, registrations: getState().event.registrations}})
-        return successCallback()
-      }
-      throw res.message
-    } catch (e) {
-      dispatch({type: ACTION_ERR, payload: {error: e}})
-    }
-  },
-  update: (model, object, successCallback) => async (dispatch, getState) => {
-    const types = { event: UPDATE_EVENT, group: UPDATE_GROUP, race: UPDATE_RACES, reg: UPDATE_REG }
-    try {
-      const response = await fetch(`${SERVICE_URL}/api/${model}/update`, returnPostHeader(object))
+      const response = await fetch(`${SERVICE_URL}/api/${model}/${action}`, returnPostHeader(object))
       let res = await response.json()
       if (response.status === 200) {
         dispatch({type: types[model], payload: {...res, registrations: getState().event.registrations}})
