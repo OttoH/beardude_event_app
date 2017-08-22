@@ -180,22 +180,9 @@ export const actionCreators = {
       dispatch({type: ACTION_ERR, payload: {error: '送出比賽結果失敗: ' + e}})
     }
   },
-  submitAdvancingRules: (state, successCallback) => async (dispatch, getState) => {
+  updateRaces: (obj, successCallback) => async (dispatch, getState) => {
     try {
-      const response = await fetch(`${SERVICE_URL}/api/race/update`, returnPostHeader({id: state.raceId, advancingRules: state.modified}))
-      let res = await response.json()
-      if (response.status === 200) {
-        dispatch({type: UPDATE_RACES, payload: {...res, registrations: getState().event.registrations}})
-        return successCallback()
-      }
-      throw res.message
-    } catch (e) {
-      dispatch({type: ACTION_ERR, payload: {error: e}})
-    }
-  },
-  submitRegsToRaces: (obj, successCallback) => async (dispatch, getState) => {
-    try {
-      const response = await fetch(`${SERVICE_URL}/api/race/assignRegsToRaces`, returnPostHeader({races: obj}))
+      const response = await fetch(`${SERVICE_URL}/api/race/updateMulti`, returnPostHeader(obj))
       let res = await response.json()
       if (response.status === 200) {
         dispatch({type: UPDATE_RACES, payload: {...res, registrations: getState().event.registrations}})
