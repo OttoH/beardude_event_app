@@ -74,7 +74,7 @@ class AssignReg extends StandardComponent {
       if (toSubmit) { submitObject.push(obj) }
     })
     if (submitObject.length > 0) {
-      this.dispatch(eventActions.updateRaces(submitObject, onSuccess))
+      this.dispatch(eventActions.submitRaces(submitObject, onSuccess))
     } else {
       this.setState({modified: false})
     }

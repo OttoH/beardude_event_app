@@ -141,16 +141,18 @@ export const actionCreators = {
       dispatch({type: ACTION_ERR, payload: {error: e}})
     }
   },
-  updateEventLatency: (obj) => async (dispatch, getState) => {
-    let eventObj = getState().event.event
-    eventObj.resultLatency = obj.event.resultLatency
-    dispatch({type: UPDATE_EVENT, payload: { event: eventObj }})
-  },
-  updateRaceOnTheFly: (raceObj) => (dispatch, getState) => {
-    dispatch({type: UPDATE_RACES, payload: {...raceObj, registrations: getState().event.registrations}})
-  },
-  updateRaceResultOnTheFly: (racesObj) => (dispatch, getState) => {
-    dispatch({type: UPDATE_RACES, payload: {...racesObj, registrations: getState().event.registrations}})
+  submitRaces: (obj, successCallback) => async (dispatch, getState) => {
+    try {
+      const response = await fetch(`${SERVICE_URL}/api/race/updateMulti`, returnPostHeader(obj))
+      let res = await response.json()
+      if (response.status === 200) {
+        dispatch({type: UPDATE_RACES, payload: {...res, registrations: getState().event.registrations}})
+        return successCallback()
+      }
+      throw res.message
+    } catch (e) {
+      dispatch({type: ACTION_ERR, payload: {error: e}})
+    }
   },
   submitRaceResult: (raceObj, successCallback) => async (dispatch, getState) => {
     const result = processData.returnTrimmedResult(raceObj.result, raceObj.laps)
@@ -167,18 +169,16 @@ export const actionCreators = {
       dispatch({type: ACTION_ERR, payload: {error: '送出比賽結果失敗: ' + e}})
     }
   },
-  updateRaces: (obj, successCallback) => async (dispatch, getState) => {
-    try {
-      const response = await fetch(`${SERVICE_URL}/api/race/updateMulti`, returnPostHeader(obj))
-      let res = await response.json()
-      if (response.status === 200) {
-        dispatch({type: UPDATE_RACES, payload: {...res, registrations: getState().event.registrations}})
-        return successCallback()
-      }
-      throw res.message
-    } catch (e) {
-      dispatch({type: ACTION_ERR, payload: {error: e}})
-    }
+  updateEventLatency: (obj) => async (dispatch, getState) => {
+    let eventObj = getState().event.event
+    eventObj.resultLatency = obj.event.resultLatency
+    dispatch({type: UPDATE_EVENT, payload: { event: eventObj }})
+  },
+  updateRaceOnTheFly: (raceObj) => (dispatch, getState) => {
+    dispatch({type: UPDATE_RACES, payload: {...raceObj, registrations: getState().event.registrations}})
+  },
+  updateRaceResultOnTheFly: (racesObj) => (dispatch, getState) => {
+    dispatch({type: UPDATE_RACES, payload: {...racesObj, registrations: getState().event.registrations}})
   }
 }
 
