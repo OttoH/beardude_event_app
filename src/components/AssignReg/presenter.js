@@ -51,7 +51,15 @@ class AssignReg extends StandardComponent {
     this.setState(stateObj)
   }
   handleSubmit () {
-    const onSuccess = () => { this.setState({ modified: false }) }
+    const onSuccess = () => {
+      this.races = this.props.races.filter(V => (V.group === this.groupId && V.isEntryRace))
+      this.unassigned = returnUnassignedRegIds(this.races, this.regs)
+      this.setState({
+        races: JSON.parse(JSON.stringify(this.races)),
+        unassigned: [{ registrationIds: [...this.unassigned] }],
+        modified: false
+      })
+    }
     let submitObject = []
     this.state.races.map((V, I) => {
       if (!arraysAreEqual(this.races[I].registrationIds, V.registrationIds)) { submitObject.push({ id: V.id, registrationIds: V.registrationIds }) }
