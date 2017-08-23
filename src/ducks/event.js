@@ -133,7 +133,9 @@ export const actionCreators = {
       const response = await fetch(`${SERVICE_URL}/api/${model}/${action}`, returnPostHeader(object))
       let res = await response.json()
       if (response.status === 200) {
-        dispatch({type: types[model], payload: {...res, registrations: getState().event.registrations}})
+        let payload = {...res, registrations: getState().event.registrations}
+        if (model === 'event') { payload.races = processData.returnRacesByOrder(getState().event.races, res.event.raceOrder) }
+        dispatch({type: types[model], payload: payload})
         return successCallback()
       }
       throw res.message
@@ -154,31 +156,14 @@ export const actionCreators = {
       dispatch({type: ACTION_ERR, payload: {error: e}})
     }
   },
-  submitRaceResult: (raceObj, successCallback) => async (dispatch, getState) => {
-    const result = processData.returnTrimmedResult(raceObj.result, raceObj.laps)
-    const advance = processData.returnRegsToRaces(raceObj)
-    try {
-      const response = await fetch(`${SERVICE_URL}/api/race/submitResult`, returnPostHeader({ id: raceObj.id, result: result, advance: advance }))
-      const res = await response.json()
-      if (response.status === 200) {
-        dispatch({type: UPDATE_RACES, payload: {...res, registrations: getState().event.registrations}})
-        return successCallback()
-      }
-      throw res.message
-    } catch (e) {
-      dispatch({type: ACTION_ERR, payload: {error: '送出比賽結果失敗: ' + e}})
-    }
-  },
   updateEventLatency: (obj) => async (dispatch, getState) => {
-    let eventObj = getState().event.event
-    eventObj.resultLatency = obj.event.resultLatency
-    dispatch({type: UPDATE_EVENT, payload: { event: eventObj }})
+    dispatch({type: UPDATE_EVENT, payload: {event: {...getState().event.event, resultLatency: obj.event.resultLatency}}})
   },
   updateRaceOnTheFly: (raceObj) => (dispatch, getState) => {
     dispatch({type: UPDATE_RACES, payload: {...raceObj, registrations: getState().event.registrations}})
   },
   updateRaceResultOnTheFly: (racesObj) => (dispatch, getState) => {
-    dispatch({type: UPDATE_RACES, payload: {...racesObj, registrations: getState().event.registrations}})
+    dispatch({type: UPDATE_RACES, payload: {...racesObj, action: 'raceend', registrations: getState().event.registrations}})
   }
 }
 
@@ -234,7 +219,9 @@ export const reducer = (state = initialState, action) => {
       return {...state, event: payload.event}
     }
     case UPDATE_EVENT: {
-      return {...state, event: {...payload.event}}
+      let nextState = {...state, event: {...payload.event}}
+      if (payload.races) { nextState.races = [...payload.races]}
+      return nextState
     }
     case UPDATE_GROUP: {
       let nextState = {...state}
@@ -252,18 +239,20 @@ export const reducer = (state = initialState, action) => {
     }
     case UPDATE_RACES: {
       let nextState = {...state}
-      payload.races.map(race => {
-        let output = {...race, result: processData.returnRaceResult(race, payload.registrations)}
-        let exists
-        nextState.races.map((V, I) => {
-          if (V.id === race.id) {
+      let exists
+      let races = nextState.races.map(raceOrg => {
+        let result = {...raceOrg}
+        payload.races.map(raceNew => {
+          if (raceNew.id === raceOrg.id) {
             exists = true
-            nextState.races[I] = output
+            result = {...raceNew, result: processData.returnRaceResult(raceNew, payload.registrations)}
           }
         })
-        if (!exists) { nextState.races.push(race) }
+        return result
       })
-      if (payload.action !== undefined) { nextState.event.ongoingRace = (payload.action === 'start') ? payload.race.id : -1 }
+      if (!exists) { nextState.races.push(payload.races[0]) }
+      if (payload.action) { nextState.event.ongoingRace = (payload.action === 'start') ? payload.races[0].id : '' }
+      nextState.races = races
       nextState.nameTables.race = processData.returnIdNameMap(payload.races)
       return nextState
     }

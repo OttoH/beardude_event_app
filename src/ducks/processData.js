@@ -1,6 +1,6 @@
 const processData = {
   canStartRace: (ongoingRace, race) => {
-    if (ongoingRace === undefined && race.registrationIds.length > 0) { return true }
+    if (ongoingRace === '' && race.registrationIds.length > 0) { return true }
     return false
   },
   canStopRace: (result, laps) => {
@@ -61,8 +61,9 @@ const processData = {
     return arr
   },
   returnOngoingRace: (ongoingRaceId, orderedRaces) => {
+    if (ongoingRaceId === '') { return '' }
     for (let i = 0; i < orderedRaces.length; i += 1) { if (orderedRaces[i].id === ongoingRaceId) { return i } }
-    return undefined
+    return ''
   },
   returnRaceResult: (race, regs) => {
     if (race.result.length > 0) { return race.result }
@@ -94,12 +95,35 @@ const processData = {
     // sortTable: [epc, name, raceNumber, timestamp, laps, record]
     return sortTable.map((item, index) => ({ epc: item[0], registration: item[1], sum: (item[3]) ? processData.returnFormattedTime(item[3] - race.startTime) : '-', laps: item[4], lapRecords: processData.returnLapRecord(item[5], race.laps, race.startTime, race.raceStatus), advanceTo: processData.returnAdvanceToId(index, race.advancingRules) }))
   },
-  // {races: [{id: ID, toAdd: [ID, ID, ID], toRemove: ID, ID, ID}, {}, {}]}
-  returnRegsToRaces: (race) => race.advancingRules.map(rule => {
-    let obj = { id: rule.toRace, toAdd: [], toRemove: [] }
-    race.result.map(V => obj[(V.advanceTo === rule.toRace) ? 'toAdd' : 'toRemove'].push(V.registration))
-    return obj
-  }),
+  returnRaceWithTrimmedResult: (race) => {
+    let output = {...race}
+    const lastRecordIndex = race.laps - 1
+    output.result = output.result.map(V => {
+      if (V.lapRecords.length > (lastRecordIndex + 1)) {
+        // 只取 lastRecordIndex + 1筆資料
+        V.lapRecords.splice(lastRecordIndex + 1, (V.lapRecords.length - (lastRecordIndex + 1)))
+      }
+      return V
+    })
+    return output
+  },
+  returnRaceResultSubmitArray: (race, races) => {
+    let output = [{ id: race.id, result: race.result, raceStatus: 'submitted', submitTime: Date.now() }]
+    let racesToAdvanceHashTable = {}
+    race.result.map(record => {
+      if (record.advanceTo) {
+        if (!racesToAdvanceHashTable[record.advanceTo]) {
+          const race = races.filter(V => (V.id === record.advanceTo))[0]
+          racesToAdvanceHashTable[record.advanceTo] = { id: race.id, registrationIds: race.registrationIds }
+        }
+        if (racesToAdvanceHashTable[record.advanceTo].registrationIds.indexOf(record.registration) === -1) { racesToAdvanceHashTable[record.advanceTo].registrationIds.push(record.registration) }
+      }
+    })
+    for (var i in racesToAdvanceHashTable) {
+      output.push(racesToAdvanceHashTable[i])
+    }
+    return output
+  },
   returnSelectedRace: (orderedRaces, ongoingRace) => {
     if (ongoingRace) { return ongoingRace }
     const selectedRaceStatusByOrder = ['started', 'ended', 'init']
@@ -109,16 +133,6 @@ const processData = {
       }
     }
     return orderedRaces.length - 1
-  },
-  returnTrimmedResult: (result, laps) => {
-    const lastRecordIndex = laps - 1
-    result.map(V => {
-      if (V.lapRecords.length > (lastRecordIndex + 1)) {
-        // 只取 lastRecordIndex + 1筆資料
-        V.lapRecords.splice(lastRecordIndex + 1, (V.lapRecords.length - (lastRecordIndex + 1)))
-      }
-    })
-    return result
   },
   returnDeferredHashTable: (hashTable, latency) => {
     const now = Date.now()
@@ -147,6 +161,11 @@ const processData = {
       if (endTime + latency > Date.now()) { output = 'started' }
     }
     return output
+  },
+  returnRacesByOrder: function (races, order) {
+    let result = []
+    order.map(raceId => { races.map(race => { if (race.id === raceId) { result.push(race) } }) })
+    return result
   }
 }
 
