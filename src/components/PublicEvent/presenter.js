@@ -103,7 +103,7 @@ export class PublicEvent extends StandardComponent {
         this.dispatch(eventActions.updateRaceOnTheFly(data))
       }.bind(this), this.props.event.resultLatency)
     }.bind(this))
-    this.socketio.on('raceresult', function (data) {
+    this.socketio.on('raceend', function (data) {
       setTimeout(function () {
         this.dispatch(eventActions.updateRaceResultOnTheFly(data))
       }.bind(this), this.props.event.resultLatency)
