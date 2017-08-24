@@ -45,7 +45,8 @@ const returnInputs = {
     {label: '隊伍報名', field: 'isTeamRegistrationOpen', type: 'checkbox'},
     {label: '個人報名', field: 'isRegistrationOpen', type: 'checkbox'},
     {label: '地下活動', field: 'isIndieEvent', type: 'checkbox', value: true},
-    {label: '發布延遲(ms)', field: 'resultLatency', type: 'number'}
+    {label: '發布延遲(ms)', field: 'resultLatency', type: 'number'},
+    {label: 'RFID讀取間隔(ms)', field: 'validIntervalMs', type: 'number', value: 10000},
   ],
   group: () => [
     {label: '中文名稱', field: 'nameCht', type: 'text'},
