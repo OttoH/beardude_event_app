@@ -250,7 +250,7 @@ export const reducer = (state = initialState, action) => {
         })
         return result
       })
-      if (!exists) { nextState.races.push(payload.races[0]) }
+      if (!exists) { races.push(payload.races[0]) }
       if (payload.action) { nextState.event.ongoingRace = (payload.action === 'start') ? payload.races[0].id : '' }
       nextState.races = races
       nextState.nameTables.race = processData.returnIdNameMap(payload.races)
