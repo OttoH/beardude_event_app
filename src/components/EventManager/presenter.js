@@ -44,6 +44,7 @@ const returnInputs = {
     {label: '地下活動', field: 'isIndieEvent', type: 'checkbox', value: true},
     {label: '發布延遲(ms)', field: 'resultLatency', type: 'number'},
     {label: 'RFID讀取間隔(ms)', field: 'validIntervalMs', type: 'number', value: 10000},
+    {label: '直播iframe', field: 'streamingIframe', type: 'textarea'}
   ],
   group: () => [
     {label: '中文名稱', field: 'nameCht', type: 'text'},
