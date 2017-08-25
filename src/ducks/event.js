@@ -75,6 +75,7 @@ export const actionCreators = {
     try {
       const response = await fetch(`${SERVICE_URL}/api/event/info/${uniqueName}`, {credentials: 'same-origin'})
       const res = await response.json()
+      // 按延遲的時間差, 依序/依時間差更新比賽成績
       const updateRacesLater = (deferredTimes, races, latency, regs) => {
         const allowance = 3000
         if (deferredTimes.length > 0) {
@@ -93,6 +94,7 @@ export const actionCreators = {
       }
       if (response.status === 200) {
         let deferredTimes = []
+        // 檢查有無延遲期間更新的資料, client第一次開啟頁面時做計算
         const races = res.races.map((V, I) => {
           let output = {...V}
           let defer = []
@@ -143,6 +145,7 @@ export const actionCreators = {
       dispatch({type: ACTION_ERR, payload: {error: e}})
     }
   },
+  // 更新多筆賽事用. 用在選手分組, 以及送出比賽成績時同時更新晉級名單
   submitRaces: (obj, successCallback) => async (dispatch, getState) => {
     try {
       const response = await fetch(`${SERVICE_URL}/api/race/updateMulti`, returnPostHeader(obj))
@@ -156,12 +159,15 @@ export const actionCreators = {
       dispatch({type: ACTION_ERR, payload: {error: e}})
     }
   },
+  // server更新latency的時候, 透過這個action把時間差更新到publicEvent
   updateEventLatency: (obj) => async (dispatch, getState) => {
     dispatch({type: UPDATE_EVENT, payload: {event: {...getState().event.event, resultLatency: obj.event.resultLatency}}})
   },
+  // socket.io收到比賽資料時更新成績
   updateRaceOnTheFly: (raceObj) => (dispatch, getState) => {
     dispatch({type: UPDATE_RACES, payload: {...raceObj, registrations: getState().event.registrations}})
   },
+  // socket.io收到比賽結果時更新成績
   updateRaceResultOnTheFly: (racesObj) => (dispatch, getState) => {
     dispatch({type: UPDATE_RACES, payload: {...racesObj, action: 'raceend', registrations: getState().event.registrations}})
   }
@@ -220,7 +226,7 @@ export const reducer = (state = initialState, action) => {
     }
     case UPDATE_EVENT: {
       let nextState = {...state, event: {...payload.event}}
-      if (payload.races) { nextState.races = [...payload.races]}
+      if (payload.races) { nextState.races = [...payload.races] }
       return nextState
     }
     case UPDATE_GROUP: {

@@ -12,16 +12,14 @@ import Header from '../Header'
 
 const render = {
   advanceMenu: ({nonEntryRaces, raceNames, value, handleEditAdvnace, index}) => <select defaultValue={value} onChange={handleEditAdvnace(index)}><option value='-1'>無</option>{nonEntryRaces.map(race => <option key={'race' + race.id} value={race.id}>{raceNames[race.id]}</option>)}</select>,
-  raceList: ({race, raceSelected, index, handleSelect, groupNames}) => {
-    return <li className={(index === raceSelected) ? css.selected : css.li} key={'race' + race.id}>
-      <button className={css.list} onClick={handleSelect(index)}>
-        <span>{groupNames[race.group.toString()]}</span>
-        <span>:</span>
-        <span>{(race.nameCht) ? race.nameCht : race.name}</span>
-      </button>
-      <div className={css[race.raceStatus]} />
-    </li>
-  },
+  raceList: ({race, raceSelected, index, handleSelect, groupNames}) => <li className={(index === raceSelected) ? css.selected : css.li} key={'race' + race.id}>
+    <button className={css.list} onClick={handleSelect(index)}>
+      <span>{groupNames[race.group.toString()]}</span>
+      <span>:</span>
+      <span>{(race.nameCht) ? race.nameCht : race.name}</span>
+    </button>
+    <div className={css[race.raceStatus]} />
+  </li>,
   raceListDraggable: ({raceId, races, index, handleSelect, groupNames, handleDragStart, handleDragOver, handleDragEnd}) => {
     const race = races.filter(V => (V.id === raceId))[0]
     return <li className={css.li} key={'race' + race.id} draggable='true' onDragStart={handleDragStart(index)} onDragOver={handleDragOver(index)} onDragEnd={handleDragEnd}>
@@ -189,6 +187,7 @@ export class MatchManager extends StandardComponent {
     this.dispatch = this.props.dispatch
     this._bind('socketIoEvents', 'countdown', 'handleChangeCountdown', 'handleControlReader', 'handleDragStart', 'handleDragOver', 'handleDragEnd', 'handleEditAdvnace', 'handleEndRace', 'handleResize', 'handleSelect', 'handleStartRace', 'handleSubmitRaceOrder', 'handleSubmitResult', 'handleToggleEdit', 'handleUpdateDialog', 'handleResetRace', 'updateRecords', 'updateOngoingRaces')
   }
+  // 更新state裡進行中的比賽. toSelectRace值為true的話會自動選擇比賽
   updateOngoingRaces (toSelectRace) {
     let stateObj = {
       ongoingRace: processData.returnOngoingRace(this.props.event.ongoingRace, this.props.races),
@@ -219,6 +218,7 @@ export class MatchManager extends StandardComponent {
   componentWillReceiveProps () {
     if (this.props.event) { this.updateOngoingRaces() }
   }
+  // 比賽倒數計時. 數完會reset
   countdown () {
     const reset = () => {
       clearInterval(this.timer)
