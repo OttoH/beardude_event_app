@@ -39,11 +39,11 @@ const returnInputs = {
     {label: '開始時間', field: 'startTime', type: 'datetime', value: (modified && modified.startTime) ? modified.startTime : (original && original.startTime ? returnDateTime(original.startTime) : undefined)},
     {label: '結束時間', field: 'endTime', type: 'datetime', value: (modified && modified.endTime) ? modified.endTime : (original && original.endTime ? returnDateTime(original.endTime) : undefined)},
     {label: '公開活動', field: 'isPublic', type: 'checkbox'},
-    {label: '隊伍報名', field: 'isTeamRegistrationOpen', type: 'checkbox'},
-    {label: '個人報名', field: 'isRegistrationOpen', type: 'checkbox'},
+    {label: '開放報名', field: 'isRegistrationOpen', type: 'checkbox'},
     {label: '地下活動', field: 'isIndieEvent', type: 'checkbox', value: true},
     {label: '發布延遲(ms)', field: 'resultLatency', type: 'number'},
-    {label: 'RFID讀取間隔(ms)', field: 'validIntervalMs', type: 'number', value: 10000},
+    {label: '讀取間隔(ms)', field: 'validIntervalMs', type: 'number', value: 10000},
+    {label: '直播iframe', field: 'streamingIframe', type: 'textarea'}
   ],
   group: () => [
     {label: '中文名稱', field: 'nameCht', type: 'text'},
@@ -140,10 +140,8 @@ const render = {
     <h3>{event.name} <span className={css.time}>{event.startTime && returnDateTime(event.startTime, true)}{event.endTime && ' - ' + returnDateTime(event.endTime, true)}</span></h3>
     <ul className={css.lights}>
       <li className={event.isPublic ? css.on : css.off}>公開活動</li>
-      <li className={event.isTeamRegistrationOpen ? css.on : css.off}>隊伍報名</li>
-      <li className={event.isRegistrationOpen ? css.on : css.off}>個人報名</li>
+      <li className={event.isRegistrationOpen ? css.on : css.off}>開放報名</li>
       <li className={event.isIndieEvent ? css.on : css.off}>地下活動</li>
-      <li className={event.pacerEpc ? css.on : css.off}>前導車RFID</li>
     </ul>
   </div>,
   infoForm: ({editModel, editValue, original, modified, onChange, onSubmit, onCancel, onDelete, rfidForm}) => <div className={css.form}>
@@ -157,7 +155,7 @@ const render = {
     </div>
   </div>,
   rfidForm: {
-    event: ({original, modified, handleInputRfid, rfidMessage}) => {
+    race: ({original, modified, handleInputRfid, rfidMessage}) => {
       const pacerEpc = valueFunc(modified, original, 'pacerEpc')
       return <div>{(rfidMessage !== -1) && <h4 className={css.forbidden}>{rfidMessage}</h4>}<ul>
         <li>
@@ -421,7 +419,7 @@ export class EventManager extends BaseComponent {
           {render.list({model: 'reg', array: arraylist.reg, state: this.state, onSelect: this.handleSelect, handleStartEdit: this.handleStartEdit})}
         </div>
       </div>
-        <Dialogue content={overlay} />
+      <Dialogue content={overlay} />
     </div>)
   }
 }
