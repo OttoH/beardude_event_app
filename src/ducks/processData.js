@@ -51,6 +51,13 @@ const processData = {
     for (i = 0; i < lapsLeft; i += 1) { output.push('-') }
     return output
   },
+  // 回傳可晉級的比賽ID
+  returnAdvanceToId: (index, advancingRules) => {
+    for (var i = 0; i < advancingRules.length; i += 1) {
+      if (index >= advancingRules[i].rankFrom && index <= advancingRules[i].rankTo) { return advancingRules[i].toRace }
+    }
+    return undefined
+  },
   // 移動array item的位置. 用來調整比賽順序及選手名次等
   returnMovedArray: (arr, oldIndex, newIndex) => {
     while (oldIndex < 0) { oldIndex += arr.length }
