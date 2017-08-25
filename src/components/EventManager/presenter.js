@@ -12,24 +12,21 @@ import AdvRule from '../AdvRule'
 import AssignReg from '../AssignReg'
 import { renderInput } from '../Table/presenter'
 
+// 回傳編輯中的或者原始的值
 const valueFunc = (modified, original, field) => {
   if (modified && modified[field] !== undefined) { return modified[field] }
   if (original) { return original[field] }
   return undefined
 }
+// timestamp parse成可閱讀的或input使用的時間格式
 const returnDateTime = (timestamp, forDisplay) => {
   const t = new Date(timestamp + 28800000) // taipei diff
   return t.getUTCFullYear() + '-' + ('0' + (t.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + t.getUTCDate()).slice(-2) + (forDisplay ? ' ' : 'T') + ('0' + t.getUTCHours()).slice(-2) + ':' + ('0' + t.getUTCMinutes()).slice(-2) // yyyy-mm-ddThh:mm
 }
+// 檢查rfid是否為unique
 const uniqueRfid = ({input, regs, pacerEpc}) => {
-  if (pacerEpc && input === pacerEpc) {
-    return false
-  }
-  for (let i = 0; i < regs.length; i += 1) {
-    if (regs[i].epc === input) {
-      return false
-    }
-  }
+  if (pacerEpc && input === pacerEpc) { return false }
+  for (let i = 0; i < regs.length; i += 1) { if (regs[i].epc === input) { return false } }
   return true
 }
 const validRfidLength = (epc) => (epc.length === 24)
@@ -45,7 +42,8 @@ const returnInputs = {
     {label: '隊伍報名', field: 'isTeamRegistrationOpen', type: 'checkbox'},
     {label: '個人報名', field: 'isRegistrationOpen', type: 'checkbox'},
     {label: '地下活動', field: 'isIndieEvent', type: 'checkbox', value: true},
-    {label: '發布延遲(ms)', field: 'resultLatency', type: 'number'}
+    {label: '發布延遲(ms)', field: 'resultLatency', type: 'number'},
+    {label: 'RFID讀取間隔(ms)', field: 'validIntervalMs', type: 'number', value: 10000},
   ],
   group: () => [
     {label: '中文名稱', field: 'nameCht', type: 'text'},
@@ -323,10 +321,11 @@ export class EventManager extends BaseComponent {
       } else {
         stateObj.editModel = this.state.editModel
         stateObj.editValue = { id: this.state.editValue.id }
-        this.dispatch(eventActions.update(model, this.state.editValue, onSuccess))
+        this.dispatch(eventActions.submit(model, this.state.editValue, onSuccess))
       }
     }
   }
+  // 會依照選取/新增/更新的類別, 選擇或取消選擇項目
   updateListArrays (stateObjRaw) {
     let stateObj = {...stateObjRaw}
     if (stateObj.groupSelected === undefined) { stateObj.groupSelected = this.state.groupSelected }
