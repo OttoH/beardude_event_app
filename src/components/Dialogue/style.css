@@ -22,7 +22,8 @@
   font-weight: 300;
   vertical-align: top;
 }
-.box input {
+.box input,
+.box textarea {
   width: 450px;
   color: #000;
   background: #fff;
@@ -32,6 +33,9 @@
   font-size: 15px;
   font-weight: 300;
   height: 30px;
+}
+.box textarea {
+  height: 60px;
 }
 .box input[type=checkbox] {
   width: 10px;
