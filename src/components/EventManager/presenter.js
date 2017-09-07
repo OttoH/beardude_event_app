@@ -43,7 +43,10 @@ const returnInputs = {
     {label: '地下活動', field: 'isIndieEvent', type: 'checkbox', value: true},
     {label: '發布延遲(ms)', field: 'resultLatency', type: 'number'},
     {label: '讀取間隔(ms)', field: 'validIntervalMs', type: 'number', value: 10000},
-    {label: '直播iframe', field: 'streamingIframe', type: 'textarea'}
+    {label: '直播url', field: 'streamingIframe', type: 'text'},
+    {label: '宣傳片url', field: 'promoVideo', type: 'text'},
+    {label: '直播開始', field: 'streamingStart', type: 'datetime', value: (modified && modified.streamingStart) ? modified.streamingStart : (original && original.streamingStart ? returnDateTime(original.streamingStart) : undefined)},
+    {label: '規則', field: 'rules', type: 'textarea'}
   ],
   group: () => [
     {label: '中文名稱', field: 'nameCht', type: 'text'},
