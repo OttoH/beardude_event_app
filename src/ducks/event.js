@@ -120,8 +120,15 @@ export const actionCreators = {
       let response = await fetch(`${SERVICE_URL}/api/race/${action}`, returnPostHeader(object))
       let res = await response.json()
       if (response.status === 200) {
-        dispatch({type: UPDATE_RACES, payload: {...res, action: action, registrations: getState().event.registrations}})
-        return successCallback()
+        if (action === 'testRfid') {
+          dispatch({type: UPDATE_EVENT, payload: {...res}})
+        } else {
+          dispatch({type: UPDATE_RACES, payload: {...res, action: action, registrations: getState().event.registrations}})
+        }
+        if (successCallback !== undefined) {
+          successCallback()
+        }
+        return
       }
       throw res.message
     } catch (e) {
@@ -162,6 +169,9 @@ export const actionCreators = {
   // server更新latency的時候, 透過這個action把時間差更新到publicEvent
   updateEventLatency: (obj) => async (dispatch, getState) => {
     dispatch({type: UPDATE_EVENT, payload: {event: {...getState().event.event, resultLatency: obj.event.resultLatency}}})
+  },
+  updateEventOnTheFly: (obj) => async (dispatch, getState) => {
+    dispatch({type: UPDATE_EVENT, payload: {event: obj.event}})
   },
   // socket.io收到比賽資料時更新成績
   updateRaceOnTheFly: (raceObj) => (dispatch, getState) => {

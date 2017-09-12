@@ -13,6 +13,7 @@ const returnNavs = {
   ],
   event: (match) => [
     { name: '賽制', url: '/console/event/' + match.params.uniqueName },
+    { name: 'RFID測試', url: '/console/eventTest/' + match.params.uniqueName },
     { name: '賽程管理', url: '/console/eventMatch/' + match.params.uniqueName }
   ]
 }
