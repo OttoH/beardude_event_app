@@ -11,6 +11,7 @@ import MatchManager from './components/MatchManager'
 import Account from './components/Account'
 import Racer from './components/Racer'
 import Team from './components/Team'
+import TestRun from './components/TestRun'
 import NotFound from './components/NotFound'
 import Manager from './components/Manager'
 import PublicEventList from './components/PublicEventList'
@@ -31,6 +32,7 @@ ReactDOM.render(
           <Route exact path='/event/:uniqueName' component={PublicEvent} />
           <Route exact path='/console' component={EventList} />
           <Route path='/console/event/:uniqueName' component={EventManager} />
+          <Route path='/console/eventTest/:uniqueName' component={TestRun} />
           <Route path='/console/eventMatch/:uniqueName' component={MatchManager} />
           <Route path='/console/racer' component={Racer} />
           <Route path='/console/team' component={Team} />

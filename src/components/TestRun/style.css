@@ -1,0 +1,132 @@
+.wrap {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg,
+      #034f84 0%,
+      #628bc0 55%,
+      #6d94c8 100%
+  );
+}
+.mainBody {
+  position: relative;
+}
+.loading {
+  font-size: 24px;
+  font-weight: 100;
+  letter-spacing: 2px;
+  color: #fff;
+  margin: 200px auto;
+  text-align: center;
+}
+.info {
+  position: relative;
+  padding: 0 15px 15px 15px;
+  width: 100%;
+  color: #fff;
+}
+.info h2 {
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: 0.4px;
+  margin: 0 0 3px 0;
+  display: inline-block;
+}
+.info .btn {
+  display: inline-block;
+}
+.info .btn button {
+  margin: 0 0 0 30px;
+}
+.managerList {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  padding: 0;
+  color: #E0E4E9;
+  font-size: 14px;
+  border-top: 1px solid #fff;
+}
+.dashTable {
+  background: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  flex-shrink: 0;
+  color: #fff;
+}
+.dashId {
+  border-left: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+}
+.dashTable thead {
+  background: rgba(255, 255, 255, 0.4);
+}
+.dashTable th,
+.dashTable td {
+  padding: 0 10px;
+  height: 32px;
+  border-left: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  min-width: 50px;
+  font-size: 13px;
+  position: relative;
+}
+.dashTable th {
+  height: 31px;
+  white-space: nowrap;
+}
+.dashTable tbody tr:first-child {
+  height: 33px;
+}
+.dashTable tbody tr {
+  background: 0;
+  height: auto;
+  line-height: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+.dashTable .name {
+  white-space: nowrap;
+}
+.dashTable .times li {
+  margin: 0 10px 0 0;
+  display: inline-block;
+}
+.detected {
+  background: rgba(61, 255, 0, 0.3);
+}
+.raceCtrl {
+  position: absolute;
+  right: 10px;
+  bottom: 0px;
+  padding: 5px 0;
+  border-radius: 3px 3px 0 0;
+  border: 1px solid #fff;
+  border-bottom: 0;
+  background: rgba(255, 255, 255, 0.4);
+}
+.raceCtrl button {
+  margin: 0 10px;
+}
+.raceNumber {
+  margin: 0 5px 0 0;
+}
+.scrollBox {
+  overflow-x: scroll;
+  overflow: auto;
+  border-left: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+  flex-grow: 1;
+}
+.scrollBox table {
+  width: 100%;
+}
+.scrollBox ul {
+  white-space: nowrap;
+}
+.scrollBox th:last-child,
+.scrollBox td:last-child {
+  border-right: 1px solid #fff;
+}
+.center {
+  text-align: center;
+}
