@@ -148,7 +148,7 @@ const render = {
         {race && race.result[0] && race.result[0].lapRecords.map((V, I) => <th key={'th-' + I}>{I + 1}</th>)}
       </tr></thead>
       <tbody>{race && race.result.length > 0 && race.result.map((record, index) => <tr key={'tr-rec-' + index} className={css.dashItem}>
-        {record.lapRecords.map((time, index) => <td key={'record-' + index} className={css.lap}>{time}</td>)}
+        {record.lapRecords.map((time, index) => <td key={'record-' + index} className={(race.slaveEpcStat[record.epc] && race.slaveEpcStat[record.epc][index.toString()]) ? css.lapSlaveEpc : css.lap}>{time}</td>)}
       </tr>)}</tbody>
     </table>,
     summary: (race) => <table className={css.dashTable}>
