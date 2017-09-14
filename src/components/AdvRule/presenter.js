@@ -67,7 +67,6 @@ class AdvRule extends StandardComponent {
   }
   handleSubmit () {
     if (this.state.canSubmit) {
-      const races = this.props.races
       const successCallback = () => {
         this.races = this.props.races.filter(V => (V.group === this.groupId))
         this.setState({raceId: undefined, modified: undefined})

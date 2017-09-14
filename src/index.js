@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
+import { AuthManager } from './lib/auth'
 import { configureStore } from './stores/configureStore'
 import { actionCreators } from './ducks/account'
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
@@ -20,8 +21,15 @@ import PublicEvent from './components/PublicEvent'
 import css from './style/index.css'
 
 const store = configureStore()
+const authManager = new AuthManager()
 
-store.dispatch(actionCreators.accountInfo())
+store.dispatch(actionCreators.accountLoading())
+authManager.getInstance().onAuthStateChanged(function (user) {
+  if (user) {
+    // User is signed in.
+    store.dispatch(actionCreators.accountInfo(user))
+  }
+})
 
 ReactDOM.render(
   <Provider store={store}>

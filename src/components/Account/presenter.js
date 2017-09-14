@@ -11,34 +11,33 @@ class Account extends BaseComponent {
     super(props)
     this.dispatch = this.props.dispatch
 
-    if (this.props.account.isAuthenticated === undefined) {
-      this.props.dispatch(actionCreators.accountInfo())
+    this.state = {
+      email: '',
+      password: ''
     }
+
     this._bind('handleSubmit', 'handleInput')
   }
   handleInput (field) {
     return (e) => {
-      this.dispatch(actionCreators.input(field, e.currentTarget.value))
+      const state = {...this.state}
+      state[field] = e.currentTarget.value
+      this.setState(state)
     }
   }
   handleSubmit () {
-    const { email, password } = this.props.account.credentials
+    const { email, password } = this.state
     if (email && password) {
-      this.dispatch(actionCreators.login())
+      this.dispatch(actionCreators.login(email, password))
     }
   }
   render () {
-    const { credentials, isAuthenticated } = this.props.account // isAuthenticated === undefined just means store is not ready yet
+    const { email, password } = this.state
+    const { isAuthenticated, error, isAccountLoading } = this.props.account
     const { from } = this.props.location.state || { from: { pathname: '/console' } }
-    const err = (credentials.error === '') ? '' : <div className={css.errMsg}>{credentials.error}</div>
+    const err = error ? '' : <div className={css.errMsg}>{error.message}</div>
 
-    /*
-    console.log('account ----')
-    console.log(this.props.location.state)
-    console.log(isAuthenticated)
-    */
-
-    if (isAuthenticated) {
+    if (!isAccountLoading && isAuthenticated) {
       return <Redirect to={from} />
     }
 
@@ -51,18 +50,18 @@ class Account extends BaseComponent {
       </div>
       <div className={css.mainBody}>
         <div className={css.body}>
-          { !this.props.location.state || isAuthenticated !== undefined
+          { !isAccountLoading
             ? <div>
               {err}
               <form>
-              <ul>
-                <li className={css.li}>
-                  <input type='text' className={css.text1} onChange={this.handleInput('email')} placeholder='電子信箱' />
-                </li>
-                <li className={css.li}>
-                  <input type='password' className={css.text2} onChange={this.handleInput('password')} placeholder='密碼' />
-                </li>
-              </ul>
+                <ul>
+                  <li className={css.li}>
+                    <input type='text' className={css.text1} value={email} onChange={this.handleInput('email')} placeholder='電子信箱' />
+                  </li>
+                  <li className={css.li}>
+                    <input type='password' className={css.text2} value={password} onChange={this.handleInput('password')} placeholder='密碼' />
+                  </li>
+                </ul>
               </form>
               <div className={css.ft}>
                 <Button onClick={this.handleSubmit} text='登入' />
