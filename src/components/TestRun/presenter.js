@@ -45,7 +45,7 @@ const render = {
     <div className={css.scrollBox}><table className={css.dashTable}>
       <thead><tr><th>讀取</th></tr></thead>
       <tbody>{filteredRegIds.map(regId => <tr key={'tr-rec-' + regId} className={css.dashItem}><td>
-        <ul className={css.times}>{event.testRfidHashTable[regNameTable[regId].epc] && event.testRfidHashTable[regNameTable[regId].epc].map(time => <li key={'res-' + time}>{returnDateTime(time)}</li>)}</ul>
+        <ul className={css.times}>{event.testRfidHashTable[regNameTable[regId].epc] && event.testRfidHashTable[regNameTable[regId].epc].map((time, index) => <li className={(event.slaveEpcStat[regNameTable[regId].epc] && event.slaveEpcStat[regNameTable[regId].epc][index.toString()]) ? css.isSlave : css.isMaster} key={'res-' + time}>{returnDateTime(time)}</li>)}</ul>
       </td></tr>)}</tbody>
     </table></div>
   </div>

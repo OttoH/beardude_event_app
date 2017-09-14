@@ -91,6 +91,9 @@
   margin: 0 10px 0 0;
   display: inline-block;
 }
+.dashTable .isSlave {
+  text-decoration: underline;
+}
 .detected {
   background: rgba(61, 255, 0, 0.3);
 }

@@ -24,9 +24,51 @@ const returnDateTime = (timestamp, forDisplay) => {
   return t.getUTCFullYear() + '-' + ('0' + (t.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + t.getUTCDate()).slice(-2) + (forDisplay ? ' ' : 'T') + ('0' + t.getUTCHours()).slice(-2) + ':' + ('0' + t.getUTCMinutes()).slice(-2) // yyyy-mm-ddThh:mm
 }
 // 檢查rfid是否為unique
-const uniqueRfid = ({input, regs, pacerEpc}) => {
-  if (pacerEpc && input === pacerEpc) { return false }
-  for (let i = 0; i < regs.length; i += 1) { if (regs[i].epc === input) { return false } }
+// {pacerEpc: 123, pacerEpcSlave: 123}
+// {id: abc, epc: 123, epcSlave: 123}
+const uniqueRfid = ({input, regs, event}) => {
+  let epcs = []
+  let target1
+  let target2
+  if (input.id) {
+    epcs.push(event.pacerEpc)
+    epcs.push(event.pacerEpcSlave)
+    regs.map(reg => {
+      if (reg.id !== input.id) {
+        epcs.push(reg.epc)
+        epcs.push(reg.epcSlave)
+      } else {
+        if (input.epc) {
+          target1 = input.epc
+        } else {
+          epcs.push(reg.epc)
+        }
+        if (input.epcSlave) {
+          target2 = input.epcSlave
+        } else {
+          epcs.push(reg.epcSlave)
+        }
+      }
+    })
+  } else {
+    regs.map(reg => {
+      epcs.push(reg.epc)
+      epcs.push(reg.epcSlave)
+    })
+    if (input.pacerEpc) {
+      if (!input.pacerEpcSlave) { epcs.push(event.pacerEpcSlave) }
+      target1 = input.pacerEpc
+    }
+    if (input.pacerEpcSlave) {
+      if (!input.pacerEpc) { epcs.push(event.pacerEpc) }
+      target2 = input.pacerEpcSlave
+    }
+  }
+  if (target1 && target2 && target1 === target2) { return false }
+  for (let i = 0; i < epcs.length; i += 1) {
+    if (target1 && target1 === epcs[i]) { return false }
+    if (target2 && target2 === epcs[i]) { return false }
+  }
   return true
 }
 const validRfidLength = (epc) => (epc.length === 24)
@@ -107,6 +149,7 @@ const render = {
         <span className={css.toRight}>
           <ul className={css.lights}>
             <li className={V.epc ? css.on : css.off}>RFID</li>
+            <li className={V.epcSlave ? css.on : css.off}>RFID2</li>
           </ul>
         </span>
       </button>
@@ -160,18 +203,32 @@ const render = {
   rfidForm: {
     race: ({original, modified, handleInputRfid, rfidMessage}) => {
       const pacerEpc = valueFunc(modified, original, 'pacerEpc')
+      const pacerEpcSlave = valueFunc(modified, original, 'pacerEpcSlave')
       return <div>{(rfidMessage !== -1) && <h4 className={css.forbidden}>{rfidMessage}</h4>}<ul>
         <li>
-          <label>前導車ID</label>
+          <label>前導RFID</label>
           <input type='text' defaultValue={pacerEpc} onChange={handleInputRfid('pacerEpc')} />
+        </li>
+        <li>
+          <label>前導RFID2</label>
+          <input type='text' defaultValue={pacerEpcSlave} onChange={handleInputRfid('pacerEpcSlave')} />
         </li>
       </ul></div>
     },
     reg: ({original, modified, handleInputRfid, rfidMessage}) => {
       const epc = valueFunc(modified, original, 'epc')
+      const epcSlave = valueFunc(modified, original, 'epcSlave')
       return <div>{(rfidMessage !== -1) && <h4 className={css.forbidden}>{rfidMessage}</h4>}
-        <label>RFID</label>
-        <input type='text' defaultValue={epc} onChange={handleInputRfid('epc')} />
+        <ul>
+          <li>
+            <label>RFID</label>
+            <input type='text' defaultValue={epc} onChange={handleInputRfid('epc')} />
+          </li>
+          <li>
+            <label>RFID Slave</label>
+            <input type='text' defaultValue={epcSlave} onChange={handleInputRfid('epcSlave')} />
+          </li>
+        </ul>
       </div>
     }
   }
@@ -294,14 +351,34 @@ export class EventManager extends BaseComponent {
       let stateObj = { editModel: undefined, editValue: undefined, rfidMessage: -1, modified: false }
       let onSuccess = () => this.updateListArrays(stateObj)
       let validateResult = true
-      if (model === 'event' && this.state.editValue.pacerEpc) {
-        if (!uniqueRfid({input: this.state.editValue.pacerEpc, regs: this.props.registrations})) {
-          return this.setState({rfidMessage: '重複的RFID: ' + this.state.editValue.pacerEpc})
+      let input = {}
+      if (model === 'event') {
+        if (this.state.editValue.pacerEpc) {  input.pacerEpc = this.state.editValue.pacerEpc }
+        if (this.state.editValue.pacerEpcSlave) {
+          input.pacerEpcSlave = this.state.editValue.pacerEpcSlave
+        }
+        if (this.state.editValue.pacerEpcSlave || this.state.racesFiltered[this.state.raceSelected].pacerEpcSlave) {
+          if (this.state.editValue.pacerEpc && this.state.editValue.pacerEpc === '') { return this.setState({rfidMessage: '需輸入主RFID'}) }
+
+          if (!this.state.racesFiltered[this.state.raceSelected].pacerEpc || this.state.racesFiltered[this.state.raceSelected].pacerEpc === '') {
+            return this.setState({rfidMessage: '需輸入主RFID'})
+          }
         }
       } else if (model === 'reg') {
-        if (!uniqueRfid({input: this.state.editValue.epc, regs: this.props.registrations, pacerEpc: this.props.event.pacerEpc})) {
-          return this.setState({rfidMessage: '重複的RFID: ' + this.state.editValue.epc})
+        input = { id: this.state.editValue.id }
+        if (this.state.editValue.epc) { input.epc = this.state.editValue.epc }
+        if (this.state.editValue.epcSlave) {
+          input.epcSlave = this.state.editValue.epcSlave
         }
+        if (this.state.editValue.epcSlave || this.state.regsFiltered[this.state.regSelected].epcSlave) {
+          if (this.state.editValue.epc && this.state.editValue.epc === '') { return this.setState({rfidMessage: '需輸入主RFID'}) }
+          if (!this.state.regsFiltered[this.state.regSelected].epc || this.state.regsFiltered[this.state.regSelected].epc === '') {
+            return this.setState({rfidMessage: '需輸入主RFID'})
+          }
+        }
+      }
+      if (!uniqueRfid({ input: input, regs: this.props.registrations, event: this.props.event } )) {
+        return this.setState({rfidMessage: '重複的RFID: ' + JSON.stringify(input)})
       }
       if (!this.state.editValue.id) {
         switch (model) {

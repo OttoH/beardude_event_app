@@ -253,12 +253,16 @@
 .dashTable .name {
   white-space: nowrap;
 }
-.dashTable .lap {
+.dashTable .lap,
+.dashTable .lapSlaveEpc {
   font-size: 13px;
   text-align: center;
   color: #fff;
   font-family: Garamond, Times;
   padding: 0 6px;
+}
+.dashTable .lapSlaveEpc {
+  text-decoration: underline;
 }
 .raceCtrl {
   position: absolute;
