@@ -1,18 +1,27 @@
-import {createStore, applyMiddleware} from 'redux'
+import {createStore, applyMiddleware, compose} from 'redux'
 import reducers from '../reducers/index'
-import {createLogger} from 'redux-logger'
 
 // fetch api need link to store
 import thunk from 'redux-thunk'
 
-let createStoreWithMiddleware
+let composeEnhancers
+const middleWares = [thunk]
+
 if (process.env.NODE_ENV === 'development') {
-  createStoreWithMiddleware = applyMiddleware(thunk, createLogger())(createStore)
+  composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
 } else {
-  createStoreWithMiddleware = applyMiddleware(thunk)(createStore)
+  composeEnhancers = compose
 }
 
-// adding thunk later
 export const configureStore = (initialState) => {
-  return createStoreWithMiddleware(reducers, initialState)
+  const store = createStore(reducers, initialState, composeEnhancers(applyMiddleware(...middleWares)))
+
+  if (module.hot) {
+    // Enable Webpack hot module replacement for reducers
+    module.hot.accept('../reducers', () => {
+      store.replaceReducer(require('../reducers/index'))
+    })
+  }
+
+  return store
 }

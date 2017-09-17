@@ -91,6 +91,7 @@ module.exports = {
       },
       {
         test: /\.css$/,
+        include: [path.resolve(__dirname, 'src/components')],
         use: ExtractTextPlugin.extract({
           use: [
             {
@@ -100,11 +101,34 @@ module.exports = {
                 modules: true,
                 importLoaders: 1,
                 localIdentName: '[name]__[local]___[hash:base64:5]',
-                sourceMap: true
+                sourceMap: false
               }
             },
             {
               loader: 'postcss-loader'
+            }
+          ]
+        })
+      },
+      {
+        test: /\.css$/,
+        exclude: [path.resolve(__dirname, 'src/components')],
+        use: ExtractTextPlugin.extract({
+          fallback: 'style-loader',
+          use: [
+            {
+              loader: 'css-loader',
+              options: {
+                minimize: true,
+                modules: true,
+                sourceMap: false,
+                importLoaders: 1 }
+            },
+            {
+              loader: `postcss-loader`,
+              options: {
+                sourceMap: false
+              }
             }
           ]
         })
