@@ -1,10 +1,10 @@
-/* global fetch, SERVICE_URL */
+/* global fetch */
 import React from 'react'
-import io from 'socket.io-client'
+import { DBManager } from '../../lib/dbManager'
 import { StandardComponent } from '../BaseComponent'
 import { Redirect } from 'react-router-dom'
 import { actionCreators as eventActions } from '../../ducks/event'
-import processData from '../../ducks/processData'
+// import processData from '../../ducks/processData'
 import css from './style.css'
 import Button from '../Button'
 import Header from '../Header'
@@ -50,11 +50,14 @@ const render = {
     </table></div>
   </div>
 }
+
 const returnDateTime = (timestamp) => {
   const t = new Date(timestamp + 28800000) // taipei diff
   return ('0' + t.getUTCHours()).slice(-2) + ':' + ('0' + t.getUTCMinutes()).slice(-2) + ':' + ('0' + t.getUTCSeconds()).slice(-2) // hh:mm
 }
+
 const returnAllRegIds = (registrations) => registrations.map(reg => reg.id)
+
 export class TestRun extends StandardComponent {
   constructor (props) {
     super(props)
@@ -66,39 +69,41 @@ export class TestRun extends StandardComponent {
       filteredRegIds: []
     }
     this.dispatch = this.props.dispatch
-    this._bind('socketIoEvents', 'handleControlReader', 'handleStartRfidTest', 'handleEndRfidTest', 'handleResetRfidTest', 'handleChangeRegFilter')
+    this.dbManager = new DBManager()
+    this._bind('dbEvents', 'handleControlReader', 'handleStartRfidTest', 'handleEndRfidTest', 'handleResetRfidTest', 'handleChangeRegFilter')
   }
   componentDidMount () {
     const onSuccess = () => {
       this.allRegIds = returnAllRegIds(this.props.registrations)
       this.setState({ filteredRegIds: [...this.allRegIds] })
     }
-    this.socketio = io(SERVICE_URL)
-    this.socketIoEvents()
+
+    this.dbEvents()
+
     if (!this.props.event || (this.props.event.uniqueName !== this.props.match.params.uniqueName)) {
       return this.dispatch(eventActions.getEvent(this.props.match.params.uniqueName, onSuccess))
     }
     return onSuccess()
   }
   componentWillUnmount () {
-    this.socketio.close()
+    this.dbManager.removeAllRefDataListener()
   }
-  socketIoEvents () {
-    this.socketio.on('connect', function () {
-      fetch(`/api/socket/mgmt?sid=${this.socketio.id}`, {credentials: 'same-origin'}).then(V => {
-        this.handleControlReader('getreaderstatus')
-      })
-    }.bind(this))
-    this.socketio.on('readerstatus', function (data) {
+  dbEvents () {
+    fetch(`/api/socket/mgmt?sid=${this.socketio.id}`, {credentials: 'same-origin'}).then(V => {
+      this.handleControlReader('getreaderstatus')
+    })
+
+    this.dbManager.addRefDataListener('readerCtrl/readerstatus', function (data) {
       this.setState({ readerStatus: (data.result && data.result.isSingulating) ? 'started' : 'idle' })
     }.bind(this))
-    this.socketio.on('testrfid', function (data) {
+
+    this.dbManager.addRefDataListener('rxdata/testrfid', function (data) {
       this.dispatch(eventActions.updateEventOnTheFly(data))
     }.bind(this))
   }
   handleControlReader (type) {
     const returnPostHeader = (obj) => ({ method: 'post', credentials: 'same-origin', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify(obj) })
-    fetch(`/api/socket/mgmt?sid=${this.socketio.id}`, returnPostHeader({ type: type, payload: { eventId: this.props.event.id } }))
+    fetch(`/api/socket/mgmt`, returnPostHeader({ type: type, payload: { eventId: this.props.event.id } }))
   }
   handleStartRfidTest () {
     this.handleControlReader('startreader')
@@ -121,7 +126,7 @@ export class TestRun extends StandardComponent {
     this.setState({ regFilter: e.target.value, filteredRegIds: filteredRegIds })
   }
   render () {
-    const { location, event, match, nameTables, races, registrations } = this.props
+    const { location, event, match, nameTables, races } = this.props
     const { readerStatus, regFilter, filteredRegIds } = this.state
     const { handleStartRfidTest, handleEndRfidTest, handleResetRfidTest, handleChangeRegFilter } = this
     if (event === -1 || !match.params.uniqueName) { return <Redirect to={{pathname: '/console'}} /> } else if (!event) { return <div><Header location={location} nav='event' match={match} /><div className={css.loading}>Loading...</div></div> }

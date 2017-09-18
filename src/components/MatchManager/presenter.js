@@ -1,6 +1,6 @@
-/* global fetch, SERVICE_URL */
+/* global fetch */
 import React from 'react'
-import io from 'socket.io-client'
+import { DBManager } from '../../lib/dbManager'
 import { StandardComponent } from '../BaseComponent'
 import { Redirect } from 'react-router-dom'
 import { actionCreators as eventActions } from '../../ducks/event'
@@ -101,7 +101,7 @@ const render = {
       <h4>您確定要取消這場比賽的所有成績，並將比賽狀態還原嗎？</h4>
       <div className={css.boxFt}>
         <Button style='alert' onClick={handleResetRace} text='確定重設' />
-        <Button style='grey' onClick={ counter ? handleUpdateDialog('countdown') : handleUpdateDialog() } text='取消' />
+        <Button style='grey' onClick={counter ? handleUpdateDialog('countdown') : handleUpdateDialog()} text='取消' />
       </div>
     </div>,
     endRace: ({ handleEndRace, handleUpdateDialog }) => <div className={css.form}>
@@ -139,7 +139,7 @@ const render = {
         return reg ? <tr className={css.dashItem} key={'rec' + index}>
           <td className={css.no}>{index + 1}</td>
           <td className={css.name}><span className={css.raceNumber}>{reg.raceNumber}</span> <span>{reg.name}</span></td>
-        </tr> : <tr key={'rec-na-' + index}></tr>
+        </tr> : <tr key={'rec-na-' + index} />
       })
       }</tbody>
     </table></div>,
@@ -184,8 +184,9 @@ export class MatchManager extends StandardComponent {
       editValue: undefined,
       counting: false
     }
+    this.dbManager = new DBManager()
     this.dispatch = this.props.dispatch
-    this._bind('socketIoEvents', 'countdown', 'handleChangeCountdown', 'handleControlReader', 'handleDragStart', 'handleDragOver', 'handleDragEnd', 'handleEditAdvnace', 'handleEndRace', 'handleResize', 'handleSelect', 'handleStartRace', 'handleSubmitRaceOrder', 'handleSubmitResult', 'handleToggleEdit', 'handleUpdateDialog', 'handleResetRace', 'updateRecords', 'updateOngoingRaces')
+    this._bind('dbEvents', 'countdown', 'handleChangeCountdown', 'handleControlReader', 'handleDragStart', 'handleDragOver', 'handleDragEnd', 'handleEditAdvnace', 'handleEndRace', 'handleResize', 'handleSelect', 'handleStartRace', 'handleSubmitRaceOrder', 'handleSubmitResult', 'handleToggleEdit', 'handleUpdateDialog', 'handleResetRace', 'updateRecords', 'updateOngoingRaces')
   }
   // 更新state裡進行中的比賽. toSelectRace值為true的話會自動選擇比賽
   updateOngoingRaces (toSelectRace) {
@@ -205,15 +206,16 @@ export class MatchManager extends StandardComponent {
   }
   componentDidMount () {
     const onSuccess = () => { this.updateOngoingRaces(true) }
-    this.socketio = io(SERVICE_URL)
-    this.socketIoEvents()
+
+    this.dbEvents()
+
     if (!this.props.event || (this.props.event.uniqueName !== this.props.match.params.uniqueName)) {
       return this.dispatch(eventActions.getEvent(this.props.match.params.uniqueName, onSuccess))
     }
     return onSuccess()
   }
   componentWillUnmount () {
-    this.socketio.close()
+    this.dbManager.removeAllRefDataListener()
   }
   componentWillReceiveProps () {
     if (this.props.event) { this.updateOngoingRaces() }
@@ -231,16 +233,16 @@ export class MatchManager extends StandardComponent {
     const result = Math.ceil(timeLeft / 1000)
     this.setState({ counter: result })
   }
-  socketIoEvents () {
-    this.socketio.on('connect', function () {
-      fetch(`/api/socket/mgmt?sid=${this.socketio.id}`, {credentials: 'same-origin'}).then(V => {
-        this.handleControlReader('getreaderstatus')
-      })
-    }.bind(this))
-    this.socketio.on('readerstatus', function (data) {
+  dbEvents () {
+    fetch(`/api/socket/mgmt`, {credentials: 'same-origin'}).then(V => {
+      this.handleControlReader('getreaderstatus')
+    })
+
+    this.dbManager.addRefDataListener('readerCtrl/readerstatus', function (data) {
       this.setState({ readerStatus: (data.result && data.result.isSingulating) ? 'started' : 'idle' })
     }.bind(this))
-    this.socketio.on('raceupdate', function (data) {
+
+    this.dbManager.addRefDataListener('rxdata/raceupdate', function (data) {
       this.dispatch(eventActions.updateRaceOnTheFly(data))
     }.bind(this))
   }
@@ -361,19 +363,19 @@ export class MatchManager extends StandardComponent {
         <div className={css.managerList}>
           <div>
             <div className={css.hd}>
-            {editField === 'raceOrder'
-              ? <span>
-                {modified === false ? <Button style='shortDisabled' text='儲存' /> : <Button style='short' onClick={this.handleSubmitRaceOrder} text='儲存' />}
-                <Button style='shortGrey' onClick={this.handleToggleEdit('raceOrder')} text='取消' />
-              </span>
-              : <Button style='short' text='編輯賽程' onClick={this.handleToggleEdit('raceOrder')} />
-            }
+              {editField === 'raceOrder'
+                ? <span>
+                  {modified === false ? <Button style='shortDisabled' text='儲存' /> : <Button style='short' onClick={this.handleSubmitRaceOrder} text='儲存' />}
+                  <Button style='shortGrey' onClick={this.handleToggleEdit('raceOrder')} text='取消' />
+                </span>
+                : <Button style='short' text='編輯賽程' onClick={this.handleToggleEdit('raceOrder')} />
+              }
             </div>
             <ul className={css.ul}>
-            {(editField === 'raceOrder')
+              {(editField === 'raceOrder')
               ? editValue.map((raceId, index) => render.raceListDraggable({ raceId, races, index, groupNames: nameTables.group, handleSelect, handleDragStart, handleDragOver, handleDragEnd }))
               : races.map((race, index) => render.raceList({ race, index, raceSelected, groupNames: nameTables.group, handleSelect }))
-            }
+              }
             </ul>
           </div>
           {render.dashboard.labels(race, nameTables.reg)}
@@ -382,9 +384,9 @@ export class MatchManager extends StandardComponent {
           {(editField === 'raceResult')
             ? <div className={css.editRank}>{ render.dashboard.edit({ nonEntryRaces: races.filter(race => (!race.isEntryRace)), race, raceNames: nameTables.race, handleDragStart, handleDragOver, handleDragEnd, handleEditAdvnace }) }</div>
             : <div className={css.advTable}>{render.dashboard.advance({race, raceNames: nameTables.race})}</div>}
-            </div>
         </div>
-        {dialog && <Dialogue content={render.dialog[dialog]({ countdown, counter, handleStartRace, handleUpdateDialog, handleChangeCountdown, handleResetRace, handleEndRace, handleSubmitResult })} />}
+      </div>
+      {dialog && <Dialogue content={render.dialog[dialog]({ countdown, counter, handleStartRace, handleUpdateDialog, handleChangeCountdown, handleResetRace, handleEndRace, handleSubmitResult })} />}
     </div>)
   }
 }

@@ -1,7 +1,5 @@
-/* global SERVICE_URL */
 import React from 'react'
-import io from 'socket.io-client'
-import BaseComponent from '../BaseComponent'
+import { DBManager } from '../../lib/dbManager'
 import { StandardComponent } from '../BaseComponent'
 import { Redirect } from 'react-router-dom'
 import { actionCreators as eventActions } from '../../ducks/event'
@@ -64,7 +62,8 @@ export class PublicEvent extends StandardComponent {
       ongoingRace: undefined
     }
     this.dispatch = this.props.dispatch
-    this._bind('socketIoEvents', 'handleSelect', 'updateRecords', 'updateOngoingRaces')
+    this.dbManager = new DBManager()
+    this._bind('dbEvents', 'handleSelect', 'updateRecords', 'updateOngoingRaces')
   }
   updateOngoingRaces (toSelectRace) {
     let stateObj = {
@@ -76,34 +75,38 @@ export class PublicEvent extends StandardComponent {
   }
   componentDidMount () {
     const onSuccess = () => {
-      this.socketIoEvents()
+      this.dbEvents()
+      // this.socketIoEvents()
       this.updateOngoingRaces(true)
     }
-    this.socketio = io(SERVICE_URL)
+    // this.socketio = io(SERVICE_URL)
     if (!this.props.event || (this.props.event.uniqueName !== this.props.match.params.uniqueName)) {
       return this.dispatch(eventActions.getEventPublic(this.props.match.params.uniqueName, onSuccess))
+    } else {
+      onSuccess()
     }
-    return onSuccess()
   }
   componentWillReceiveProps () {
     if (this.props.event) { this.updateOngoingRaces() }
   }
   componentWillUnmount () {
-    this.socketio.close()
+    this.dbManager.removeAllRefDataListener()
   }
-  socketIoEvents (callback) {
-    this.socketio.on('connect', function () {
-      fetch(`/api/socket/info?sid=${this.socketio.id}`, {credentials: 'same-origin'}).then(V => { if (callback !== undefined) { callback() } })
-    }.bind(this))
-    this.socketio.on('eventlatencyupdate', function (data) {
+  dbEvents () {
+    console.log('PublicEvent', 'dbEvents');
+    // fetch(`/api/socket/info?sid=${this.socketio.id}`, {credentials: 'same-origin'}).then(V => { if (callback !== undefined) { callback() } })})
+
+    this.dbManager.addRefDataListener('rxdata/eventlatencyupdate', function (data) {
       this.dispatch(eventActions.updateEventLatency(data))
     }.bind(this))
-    this.socketio.on('raceupdate', function (data) {
+
+    this.dbManager.addRefDataListener('rxdata/raceupdate', function (data) {
       setTimeout(function () {
         this.dispatch(eventActions.updateRaceOnTheFly(data))
       }.bind(this), this.props.event.resultLatency)
     }.bind(this))
-    this.socketio.on('raceend', function (data) {
+
+    this.dbManager.addRefDataListener('rxdata/raceend', function (data) {
       setTimeout(function () {
         this.dispatch(eventActions.updateRaceResultOnTheFly(data))
       }.bind(this), this.props.event.resultLatency)

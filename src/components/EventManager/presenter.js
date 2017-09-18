@@ -357,13 +357,15 @@ export class EventManager extends BaseComponent {
         if (this.state.editValue.pacerEpcSlave) {
           input.pacerEpcSlave = this.state.editValue.pacerEpcSlave
         }
-        if (this.state.editValue.pacerEpcSlave || this.state.racesFiltered[this.state.raceSelected].pacerEpcSlave) {
+
+        if (this.state.editValue.pacerEpcSlave || (this.state.racesFiltered[this.state.raceSelected] && this.state.racesFiltered[this.state.raceSelected].pacerEpcSlave)) {
           if (this.state.editValue.pacerEpc && this.state.editValue.pacerEpc === '') { return this.setState({rfidMessage: '需輸入主RFID'}) }
 
           if (!this.state.racesFiltered[this.state.raceSelected].pacerEpc || this.state.racesFiltered[this.state.raceSelected].pacerEpc === '') {
             return this.setState({rfidMessage: '需輸入主RFID'})
           }
         }
+
       } else if (model === 'reg') {
         input = { id: this.state.editValue.id }
         if (this.state.editValue.epc) { input.epc = this.state.editValue.epc }
@@ -371,8 +373,9 @@ export class EventManager extends BaseComponent {
           input.epcSlave = this.state.editValue.epcSlave
         }
         if (this.state.editValue.epcSlave || this.state.regsFiltered[this.state.regSelected].epcSlave) {
+          const filterRegs = this.state.regsFiltered[this.state.regSelected]
           if (this.state.editValue.epc && this.state.editValue.epc === '') { return this.setState({rfidMessage: '需輸入主RFID'}) }
-          if (!this.state.regsFiltered[this.state.regSelected].epc || this.state.regsFiltered[this.state.regSelected].epc === '') {
+          if (filterRegs && !filterRegs.epc) {
             return this.setState({rfidMessage: '需輸入主RFID'})
           }
         }
